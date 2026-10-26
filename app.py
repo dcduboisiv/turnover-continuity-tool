@@ -390,19 +390,25 @@ c3.metric("Care-continuity score", "—" if continuity is None or pd.isna(contin
 c3.caption("1.00 = no caregiver changes" if continuity is not None
            else "No child-facing roles in this view" if not weights
            else "No children served in this view")
+def millions(x: float) -> str:
+    return f"${x / 1e6:,.2f}M"
+
+
 c4, c5 = st.columns(2)
-c4.metric("Cost of turnover / yr", f"${cost['annual_cost']:,.0f}",
-          help="Departures per year x fully-loaded cost per departure, for the roles in view.")
+c4.metric("Cost of turnover / yr", millions(cost["annual_cost"]),
+          help=f"Exactly ${cost['annual_cost']:,.0f} a year: departures per year x fully-loaded cost "
+               "per departure, for the roles in view.")
 supporting = [
     f"${cost['cost_per_departure']:,.0f} per departure" if cost["cost_per_departure"] is not None
     else "no departures in this view",
     f"${cost['monthly_cost']:,.0f} per month",
-    f"{cost['share_of_budget']:.1%} of the ${cost['program_budget']:,.0f} program budget"
+    f"{cost['share_of_budget']:.1%} of the {millions(cost['program_budget'])} program budget"
     if cost["share_of_budget"] is not None else "no program budget for this view",
 ]
 c4.caption("  \n".join(supporting) + "  \n" + ("with ramp-up discount" if ramp_on else "ramp-up discount off"),
            help=f"Per departure: the period's {cost['departures']} departures cost ${cost['period_cost']:,.0f} "
-                "in all. Program budget: synthetic, for the sites in view (sidebar → Program budget).")
+                f"in all. Program budget: exactly ${cost['program_budget'] or 0:,.0f}, synthetic, for the "
+                "sites in view (sidebar → Program budget).")
 GAP_LABEL = "Days without a worker, per affected family"
 GAP_HELP = ("For families whose caseworker or clinician seat went vacant: the average number of days they "
             "went without that worker. Affected families = the typical caseload of each seat that had a "

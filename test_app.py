@@ -39,6 +39,12 @@ def num(s: str) -> float:
     return float(s.replace("$", "").replace(",", "").replace("%", ""))
 
 
+def exact_cost(at) -> float:
+    """The exact annual cost from the cost card's tooltip (the card shows $X.XXM)."""
+    card = next(m for m in at.metric if m.label == "Cost of turnover / yr")
+    return num(card.help.split("Exactly ")[1].split(" a year")[0])
+
+
 def test_app_loads_and_labels_data_fictional():
     at = run_app()
     assert not at.exception and not at.error
@@ -113,10 +119,10 @@ def test_site_filter_limits_roles_and_scores_children_served():
 
 def test_ramp_toggle_changes_cost_but_table_keeps_both():
     at = run_app()
-    with_ramp = num(metrics(at)["Cost of turnover / yr"])
+    with_ramp = exact_cost(at)
     table_on = at.main.dataframe[0].value
     at.sidebar.toggle(key="ramp_on").set_value(False).run()
-    assert num(metrics(at)["Cost of turnover / yr"]) < with_ramp
+    assert exact_cost(at) < with_ramp
     table_off = at.main.dataframe[0].value
     for col in ["Break-even months (no ramp)", "Break-even months (with ramp)"]:
         assert table_off[col].tolist() == table_on[col].tolist()
@@ -285,11 +291,13 @@ def test_cost_card_supporting_figures_match_the_engine():
     h = sc.headline(DATA, sc.View(), sc.Settings(load_cost_assumptions(),
                                                  budgets=load_program_budgets().to_dict()),
                     list(load_cost_assumptions().index))
-    assert metrics(at)["Cost of turnover / yr"] == f"${h['annual_turnover_cost']:,.0f}"   # still the headline
+    assert metrics(at)["Cost of turnover / yr"] == f"${h['annual_turnover_cost'] / 1e6:,.2f}M"   # $1.17M
+    assert metrics(at)["Cost of turnover / yr"] == "$1.17M"
+    assert exact_cost(at) == round(h["annual_turnover_cost"])          # exact figure on hover
     card = next(c.value for c in at.caption if "per departure" in c.value)
     assert f"${h['avg_cost_per_departure']:,.0f} per departure" in card
     assert f"${h['monthly_turnover_cost']:,.0f} per month" in card
-    assert f"{h['turnover_cost_share_of_budget']:.1%} of the $22,000,000 program budget" in card
+    assert f"{h['turnover_cost_share_of_budget']:.1%} of the $22.00M program budget" in card
     assert h["departures"] == 177
 
 
@@ -297,4 +305,4 @@ def test_site_view_uses_that_sites_budget():
     at = run_app()
     at.sidebar.selectbox(key="site").select("SITE-03").run()
     card = next(c.value for c in at.caption if "per departure" in c.value)
-    assert "of the $3,100,000 program budget" in card
+    assert "of the $3.10M program budget" in card

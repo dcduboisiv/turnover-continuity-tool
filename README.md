@@ -110,7 +110,7 @@ youth care worker because staff left.
   - **Main panel:** headline cards in two rows. The first row has turnover
     rate, vacancy rate and the care-continuity score. The second row has
     the annual cost of turnover, with its supporting figures underneath
-    (cost per departure, monthly cost, share of the program budget), and
+    (cost per departure, monthly cost, share of the program budget). The cost and the budget are shown as $X.XXM, with the exact figures on hover, and
     days without a worker per affected family; cost per departure and break-even tenure by
     role, with and without the ramp (the toggle decides which one feeds the
     annual cost and the "left before break-even" share); vacancy cost
