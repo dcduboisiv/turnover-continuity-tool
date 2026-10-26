@@ -8,17 +8,23 @@ from turnover_calculator import (
     RAMP_START_PRODUCTIVITY,
     RAMP_UP_SCHEDULE,
     ROLE_CRITICALITY,
+    TYPICAL_CASEWORKER_CASELOAD,
+    VACANCY_COST_BASIS,
     breakeven_months,
     breakeven_tenure,
     care_continuity,
     care_continuity_score,
+    caseworker_vacancy_family_days,
     cost_per_departure,
+    family_days_without_caseworker,
     fill_events,
     linear_ramp,
     load_cost_assumptions,
     retention_curves,
     turnover_rates,
+    vacancy_cost_crossover,
     vacancy_report,
+    vacancy_spells,
 )
 
 T = pd.Timestamp
@@ -250,6 +256,40 @@ def test_breakeven_tenure_by_role():
     assert (shipped["breakeven_months"] > shipped["breakeven_months_no_ramp"]).all()
 
 
+def test_vacancy_cost_basis_defaults_to_coverage_premium():
+    assert VACANCY_COST_BASIS == "coverage_premium"
+    default = breakeven_tenure(KNOWN)
+    pd.testing.assert_frame_equal(default, breakeven_tenure(KNOWN, basis="coverage_premium"))
+
+
+def test_vacancy_cost_basis_full_salary():
+    b = breakeven_tenure(KNOWN, basis="full_salary").loc["Test Role"]
+    assert b["monthly_cost_avoided"] == pytest.approx(12_500)  # full loaded monthly cost
+    assert b["breakeven_months_no_ramp"] == pytest.approx(12_000 / 12_500)   # 0.96
+    # month 1 recovers 6,250; month 2 at 75% recovers 9,375 -> 1 + 5,750 / 9,375
+    assert b["breakeven_months"] == pytest.approx(1 + 5_750 / 9_375)
+    with pytest.raises(ValueError):
+        breakeven_tenure(KNOWN, basis="salary")
+
+
+def test_vacancy_cost_crossover_known_case():
+    c = vacancy_cost_crossover(KNOWN).loc["Test Role"]
+    assert c["recruiting_and_onboarding_cost"] == 12_000
+    assert c["monthly_coverage_premium"] == pytest.approx(5_000)   # 12,500 x 0.40
+    assert c["crossover_months"] == pytest.approx(2.4)
+    free = KNOWN.assign(coverage_premium=0.0)
+    assert vacancy_cost_crossover(free).loc["Test Role", "crossover_months"] == math.inf
+
+
+def test_vacancy_cost_crossover_ignores_basis_and_ramp():
+    shipped = load_cost_assumptions()
+    c = vacancy_cost_crossover(shipped)["crossover_months"]
+    b = breakeven_tenure(shipped, basis="full_salary")
+    assert (c > b["breakeven_months_no_ramp"]).all()
+    # caseworker: (4,000 + 14,000) / (58,000 x 1.30 / 12 x 0.50)
+    assert c["Caseworker"] == pytest.approx(18_000 / (58_000 * 1.30 / 12 * 0.50))
+
+
 def test_breakeven_tenure_counts_departures_before_breakeven():
     a = KNOWN.rename(index={"Test Role": "Caseworker"})
     # 2023 caseworker leavers: B only (tenure from 2021-02-01: ~25 months, past 3.15)
@@ -329,3 +369,58 @@ def test_continuity_weights_change_the_score_and_period_clips():
     assert q1["transitions"].to_dict() == {"C1": 0, "C2": 0, "C3": 0, "C4": 1}
     with pytest.raises(ValueError):
         care_continuity(ROSTER, P_START, P_END, weights={"Caseworker": 0})
+
+
+# ---------------------------------------------------------------------------
+# Continuity gap: family-days without an assigned caseworker
+# ---------------------------------------------------------------------------
+
+# 2023. Countable caseworker vacancies:
+#   K1  leaves 2023-03-15, backfilled 2023-04-14          30 days
+#   K2  leaves 2023-11-01, never refilled (still open)    61 days
+#   K3  in seat all year                                    0
+#   K4  holder left 2022-12-01, backfill 2023-01-21       20 days inside 2023
+#   K5  never staffed at all                             365 days (still open)
+#   Y1  a youth care worker vacancy: not a caseworker seat, ignored
+GAP_STAFF = roster([
+    ("k1a", "K1", "Caseworker", "2020-01-01", "2023-03-15", "Voluntary"),
+    ("k1b", "K1", "Caseworker", "2023-04-14", None, None),
+    ("k2a", "K2", "Caseworker", "2021-06-01", "2023-11-01", "Involuntary"),
+    ("k3a", "K3", "Caseworker", "2019-01-01", None, None),
+    ("k4a", "K4", "Caseworker", "2018-01-01", "2022-12-01", "Voluntary"),
+    ("k4b", "K4", "Caseworker", "2023-01-21", None, None),
+    ("y1a", "Y1", "Youth Care Worker", "2020-01-01", "2023-05-01", "Voluntary"),
+])
+GAP_POSITIONS = pd.DataFrame({
+    "position_id": ["K1", "K2", "K3", "K4", "K5", "Y1"],
+    "site_id": ["S1", "S1", "S1", "S2", "S2", "S2"],
+    "role": ["Caseworker"] * 5 + ["Youth Care Worker"],
+})
+
+
+def test_vacancy_spells_hand_calculated():
+    s = vacancy_spells(GAP_STAFF, GAP_POSITIONS, START, END, role="Caseworker").set_index("position_id")
+    assert s["days_vacant"].to_dict() == {"K1": 30, "K2": 61, "K4": 20, "K5": 365}
+    assert s.loc[["K2", "K5"], "still_open"].all() and not s.loc[["K1", "K4"], "still_open"].any()
+    assert s.loc["K4", "vacancy_start"] == START           # clipped to the period
+
+
+def test_family_days_without_caseworker_known_case():
+    assert TYPICAL_CASEWORKER_CASELOAD == 10
+    total = family_days_without_caseworker(GAP_STAFF, GAP_POSITIONS, START, END).loc["All"]
+    assert total["vacancies"] == 4 and total["still_open"] == 2
+    assert total["vacant_days"] == 30 + 61 + 20 + 365
+    assert total["family_days"] == (30 + 61 + 20 + 365) * 10                  # 4,760
+
+    by_site = family_days_without_caseworker(GAP_STAFF, GAP_POSITIONS, START, END, by="site_id")
+    assert by_site["family_days"].to_dict() == {"S1": (30 + 61) * 10, "S2": (20 + 365) * 10}
+
+
+def test_family_days_uses_each_seats_caseload():
+    per_seat = caseworker_vacancy_family_days(GAP_STAFF, GAP_POSITIONS, START, END,
+                                              caseload={"K1": 12, "K2": 8})
+    # K4 and K5 aren't in the mapping and fall back to the typical caseload
+    assert per_seat.set_index("position_id")["family_days"].to_dict() == {
+        "K1": 30 * 12, "K2": 61 * 8, "K4": 20 * 10, "K5": 365 * 10}
+    flat = family_days_without_caseworker(GAP_STAFF, GAP_POSITIONS, START, END, caseload=15)
+    assert flat.loc["All", "family_days"] == (30 + 61 + 20 + 365) * 15

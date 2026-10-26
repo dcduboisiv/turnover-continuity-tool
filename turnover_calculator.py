@@ -8,9 +8,14 @@ and child-caregiver assignments, and computes:
 - vacancy rate and average days-to-fill by role
 - retention cohort curves
 - fully-loaded cost of turnover per departure, from per-role assumptions
-- break-even tenure by role, with a configurable ramp-up discount
+- break-even tenure by role, with a configurable ramp-up discount and
+  vacancy-cost basis
+- vacancy cost crossover: months of coverage spend that equal the cost of
+  recruiting and onboarding a replacement
 - a care-continuity risk score: distinct caregivers per child, weighted by
   role criticality
+- a continuity gap: family-days without an assigned caseworker (vacant
+  caseworker seat-days x typical caseload)
 
 Conventions used everywhere:
 
@@ -55,6 +60,17 @@ COST_COLUMNS = ["annual_salary", "fringe_rate", "recruiting_cost", "training_cos
 # (defaults: 50% / 75% / 100%). Full productivity after the schedule ends.
 RAMP_START_PRODUCTIVITY = 0.50
 RAMP_MONTHS_TO_FULL = 3
+
+# What a filled seat saves each month, for break-even tenure:
+#   "coverage_premium" - the overtime / temp premium above normal pay
+#                        (loaded monthly cost x coverage_premium)
+#   "full_salary"      - the seat's full loaded monthly cost
+VACANCY_COST_BASES = ("coverage_premium", "full_salary")
+VACANCY_COST_BASIS = "coverage_premium"
+
+# Families / children normally assigned to one caseworker, for the
+# family-days-without-a-caseworker continuity gap.
+TYPICAL_CASEWORKER_CASELOAD = 10
 
 # How much a change of person in each child-facing role disrupts a child's
 # care. Roles not listed here are not counted in the continuity score.
@@ -195,6 +211,67 @@ def vacancy_report(staff: pd.DataFrame, positions: pd.DataFrame, start, end,
     return out
 
 
+def vacancy_spells(staff: pd.DataFrame, positions: pd.DataFrame, start, end,
+                   role: Optional[str] = None) -> pd.DataFrame:
+    """Every stretch a seat sat empty, clipped to [start, end).
+
+    A seat whose first known holder starts after `start` counts as empty
+    from `start`; a seat with no one in it at the end is still_open.
+    """
+    start, end, _ = _period(start, end)
+    pos = positions if role is None else positions[positions["role"] == role]
+    held = staff[staff["position_id"].isin(pos["position_id"])].sort_values(["position_id", "hire_date"])
+    by_seat = {pid: list(zip(g["hire_date"], g["termination_date"])) for pid, g in held.groupby("position_id")}
+    rows = []
+    for p in pos.itertuples(index=False):
+        vacant_from = start
+        for hire, term in by_seat.get(p.position_id, []):
+            if hire > vacant_from:
+                rows.append((p.position_id, p.site_id, vacant_from, hire, False))
+            if pd.isna(term):
+                vacant_from = None
+                break
+            vacant_from = term
+        if vacant_from is not None:
+            rows.append((p.position_id, p.site_id, vacant_from, end, True))
+    out = pd.DataFrame(rows, columns=["position_id", "site_id", "vacancy_start", "vacancy_end", "still_open"])
+    out["vacancy_start"] = out["vacancy_start"].clip(lower=start)
+    out["vacancy_end"] = out["vacancy_end"].clip(upper=end)
+    out["days_vacant"] = (out["vacancy_end"] - out["vacancy_start"]).dt.days
+    return out[out["days_vacant"] > 0].reset_index(drop=True)
+
+
+def caseworker_vacancy_family_days(staff: pd.DataFrame, positions: pd.DataFrame, start, end,
+                                   caseload: Union[int, Mapping[str, int]] = TYPICAL_CASEWORKER_CASELOAD,
+                                   role: str = "Caseworker") -> pd.DataFrame:
+    """CONTINUITY GAP: family-days without an assigned caseworker, per vacancy.
+
+    family_days = days the caseworker seat was empty in [start, end) x that
+    seat's typical caseload. `caseload` is one number for every seat or a
+    mapping of position_id -> caseload. This measures how long families go
+    without a caseworker of record; it is separate from the care-continuity
+    score, which counts changes of caregiver.
+    """
+    spells = vacancy_spells(staff, positions, start, end, role=role)
+    if isinstance(caseload, Mapping):
+        spells["caseload"] = spells["position_id"].map(caseload).fillna(TYPICAL_CASEWORKER_CASELOAD)
+    else:
+        spells["caseload"] = caseload
+    spells["family_days"] = spells["days_vacant"] * spells["caseload"]
+    return spells
+
+
+def family_days_without_caseworker(staff: pd.DataFrame, positions: pd.DataFrame, start, end,
+                                   caseload: Union[int, Mapping[str, int]] = TYPICAL_CASEWORKER_CASELOAD,
+                                   by: By = None) -> pd.DataFrame:
+    """CONTINUITY GAP summed over all caseworker vacancies in the period."""
+    spells, keys = _keys(caseworker_vacancy_family_days(staff, positions, start, end, caseload), by)
+    return spells.groupby(keys).agg(vacancies=("position_id", "size"),
+                                    still_open=("still_open", "sum"),
+                                    vacant_days=("days_vacant", "sum"),
+                                    family_days=("family_days", "sum"))
+
+
 def retention_curves(staff: pd.DataFrame, as_of, months: Iterable[int] = RETENTION_MONTHS,
                      by: By = "hire_year", hired_from=None) -> pd.DataFrame:
     """Share of each hire cohort still employed m months after hire.
@@ -295,18 +372,33 @@ def breakeven_months(upfront_cost: float, monthly_cost_avoided: float,
     return len(_check_schedule(schedule)) + (upfront_cost - recovered) / monthly_cost_avoided
 
 
+def monthly_coverage_premium(assumptions: pd.DataFrame) -> pd.Series:
+    """Overtime / temp spend above normal pay while a seat is empty, per month."""
+    return monthly_loaded_cost(assumptions) * assumptions["coverage_premium"]
+
+
+def monthly_vacancy_cost(assumptions: pd.DataFrame, basis: str = VACANCY_COST_BASIS) -> pd.Series:
+    """What a filled seat saves each month, on the chosen VACANCY_COST_BASES basis."""
+    if basis == "coverage_premium":
+        return monthly_coverage_premium(assumptions)
+    if basis == "full_salary":
+        return monthly_loaded_cost(assumptions)
+    raise ValueError(f"basis must be one of {VACANCY_COST_BASES}, not {basis!r}")
+
+
 def breakeven_tenure(assumptions: pd.DataFrame, schedule: Schedule = RAMP_UP_SCHEDULE,
-                     staff: Optional[pd.DataFrame] = None, start=None, end=None) -> pd.DataFrame:
+                     staff: Optional[pd.DataFrame] = None, start=None, end=None,
+                     basis: str = VACANCY_COST_BASIS) -> pd.DataFrame:
     """Break-even tenure per role, with and without the ramp-up discount.
 
-    Upfront cost = recruiting + training. Monthly cost avoided = the
-    coverage premium a filled seat saves (loaded monthly cost x
-    coverage_premium). With staff and a period, also reports the share of
-    departures in that period who left before reaching break-even.
+    Upfront cost = recruiting + training. Monthly cost avoided = what a
+    filled seat saves, per `basis` (see VACANCY_COST_BASIS). With staff and
+    a period, also reports the share of departures in that period who left
+    before reaching break-even.
     """
     out = pd.DataFrame(index=assumptions.index)
     out["upfront_cost"] = assumptions["recruiting_cost"] + assumptions["training_cost"]
-    out["monthly_cost_avoided"] = monthly_loaded_cost(assumptions) * assumptions["coverage_premium"]
+    out["monthly_cost_avoided"] = monthly_vacancy_cost(assumptions, basis)
     pairs = list(zip(out["upfront_cost"], out["monthly_cost_avoided"]))
     out["breakeven_months_no_ramp"] = [breakeven_months(u, m, None) for u, m in pairs]
     out["breakeven_months"] = [breakeven_months(u, m, schedule) for u, m in pairs]
@@ -320,6 +412,22 @@ def breakeven_tenure(assumptions: pd.DataFrame, schedule: Schedule = RAMP_UP_SCH
         out["departures"] = left.groupby("role").size().reindex(out.index, fill_value=0)
         out["left_before_breakeven"] = early.groupby(left["role"]).sum().reindex(out.index, fill_value=0)
         out["share_left_before_breakeven"] = out["left_before_breakeven"] / out["departures"].where(out["departures"] > 0)
+    return out
+
+
+def vacancy_cost_crossover(assumptions: pd.DataFrame) -> pd.DataFrame:
+    """Months of overtime / temp coverage spend that add up to the cost of
+    recruiting and onboarding a replacement, per role.
+
+    crossover_months = (recruiting + training) / monthly coverage premium.
+    An empty seat covered for longer than this has cost more than hiring.
+    Independent of VACANCY_COST_BASIS and the ramp-up.
+    """
+    out = pd.DataFrame(index=assumptions.index)
+    out["recruiting_and_onboarding_cost"] = assumptions["recruiting_cost"] + assumptions["training_cost"]
+    out["monthly_coverage_premium"] = monthly_coverage_premium(assumptions)
+    premium = out["monthly_coverage_premium"]
+    out["crossover_months"] = (out["recruiting_and_onboarding_cost"] / premium.where(premium > 0)).fillna(math.inf)
     return out
 
 
@@ -383,8 +491,11 @@ def run_report(data_dir: str = ".", start=HISTORY_START, end=HISTORY_END,
         "cost_per_departure": costs,
         "annual_turnover_cost": annual_turnover_cost(by_role, costs),
         "breakeven_tenure": breakeven_tenure(assumptions, staff=staff, start=start, end=end),
+        "vacancy_cost_crossover": vacancy_cost_crossover(assumptions),
         "continuity_by_site_last_12_months": care_continuity_score(
             data["assignments"], last_year, end, by="site_id").to_frame("continuity_score"),
+        "continuity_gap_family_days_without_caseworker": family_days_without_caseworker(
+            staff, positions, start, end, by="site_id"),
     }
 
 
