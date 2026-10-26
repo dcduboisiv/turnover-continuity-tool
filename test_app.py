@@ -124,23 +124,23 @@ def test_ramp_toggle_changes_cost_but_table_keeps_both():
     at.sidebar.toggle(key="ramp_on").set_value(False).run()
     assert exact_cost(at) < with_ramp
     table_off = at.main.dataframe[0].value
-    for col in ["Break-even months (no ramp)", "Break-even months (with ramp)"]:
+    for col in ["Break-even, no ramp", "Break-even, with ramp"]:
         assert table_off[col].tolist() == table_on[col].tolist()
-    assert (table_on["Break-even months (with ramp)"] > table_on["Break-even months (no ramp)"]).all()
+    assert (table_on["Break-even, with ramp"] > table_on["Break-even, no ramp"]).all()
 
 
 def test_ramp_settings_flow_through():
     at = run_app()
     at.sidebar.slider(key="ramp_months").set_value(1).run()  # full productivity in month 1 = no ramp
     t = at.main.dataframe[0].value
-    assert t["Break-even months (with ramp)"].tolist() == pytest.approx(t["Break-even months (no ramp)"].tolist())
+    assert t["Break-even, with ramp"].tolist() == pytest.approx(t["Break-even, no ramp"].tolist())
 
 
 def test_vacancy_cost_basis_toggle():
     at = run_app()
-    before = at.main.dataframe[0].value["Break-even months (no ramp)"]
+    before = at.main.dataframe[0].value["Break-even, no ramp"]
     at.sidebar.radio(key="basis").set_value("full_salary").run()
-    after = at.main.dataframe[0].value["Break-even months (no ramp)"]
+    after = at.main.dataframe[0].value["Break-even, no ramp"]
     assert (after < before).all()
     # crossover always uses the coverage premium, whatever the basis
     assert at.main.dataframe[1].value["Crossover months"].tolist() == pytest.approx(before.tolist())

@@ -434,31 +434,51 @@ costs_ramp = cost_per_departure(costs_view, vacancy_by_role["avg_days_to_fill"],
 costs_flat = cost_per_departure(costs_view, vacancy_by_role["avg_days_to_fill"], None)
 be_ramp = breakeven_tenure(costs_view, schedule, basis=basis)
 be_applied = breakeven_tenure(costs_view, applied_schedule, staff=staff, start=start, end=end, basis=basis)
+# Short headers so the table fits a laptop-width page; the full meaning is in
+# the caption above and each header's tooltip.
+COST_COLUMNS = {  # header: (tooltip, format)
+    "Departures": ("Departures in the period.", None),
+    "Cost, no ramp": ("Fully-loaded cost per departure, without the ramp-up discount.", "dollar"),
+    "Cost, with ramp": ("Fully-loaded cost per departure, including lost productivity while the "
+                        "replacement ramps up.", "dollar"),
+    "Break-even, no ramp": ("Break-even tenure in months, with the new hire fully productive from day one.",
+                            "%.1f"),
+    "Break-even, with ramp": ("Break-even tenure in months, with the ramp-up discount.", "%.1f"),
+    "Left before break-even": ("Share of the period's departures who left before break-even"
+                               + (" (with ramp)." if ramp_on else " (no ramp)."), "%.0f%%"),
+}
 cost_table = pd.DataFrame({
     "Departures": be_applied["departures"],
-    "Cost / departure (no ramp)": costs_flat["cost_per_departure"],
-    "Cost / departure (with ramp)": costs_ramp["cost_per_departure"],
-    "Break-even months (no ramp)": be_ramp["breakeven_months_no_ramp"],
-    "Break-even months (with ramp)": be_ramp["breakeven_months"],
+    "Cost, no ramp": costs_flat["cost_per_departure"],
+    "Cost, with ramp": costs_ramp["cost_per_departure"],
+    "Break-even, no ramp": be_ramp["breakeven_months_no_ramp"],
+    "Break-even, with ramp": be_ramp["breakeven_months"],
     "Left before break-even": be_applied["share_left_before_breakeven"] * 100,
 }).rename_axis("Role").reset_index()
 
-left, right = st.columns([3, 2])
+
+def header_width(label: str) -> int:
+    """Pixels for a column to show its whole header (about 6.5px a character plus padding;
+    checked in Chrome at 1280-1920px wide)."""
+    return max(90, int(6.5 * len(label)) + 26)
+
+
+st.caption("Cost = fully-loaded cost per departure. Break-even = months a new hire must stay to pay back "
+           "recruiting and training. Hover a header for its full definition.")
 dollars = {"format": "dollar", "step": 1}
-left.dataframe(cost_table, hide_index=True, width="stretch", column_config={
-    "Cost / departure (no ramp)": st.column_config.NumberColumn(**dollars),
-    "Cost / departure (with ramp)": st.column_config.NumberColumn(**dollars),
-    "Break-even months (no ramp)": st.column_config.NumberColumn(format="%.1f"),
-    "Break-even months (with ramp)": st.column_config.NumberColumn(format="%.1f"),
-    "Left before break-even": st.column_config.NumberColumn(
-        format="%.0f%%", help="Share of the period's departures who left before break-even"
-                              + (" (with ramp)." if ramp_on else " (no ramp).")),
+# Every column is sized to its whole header and Role stays pinned, so a narrow
+# screen scrolls the table sideways instead of cutting headers off.
+st.dataframe(cost_table, hide_index=True, width="stretch", column_config={
+    "Role": st.column_config.TextColumn(width=170, pinned=True),
+    **{name: st.column_config.NumberColumn(name, width=header_width(name), help=tip,
+                                           **(dollars if f == "dollar" else {"format": f} if f else {}))
+       for name, (tip, f) in COST_COLUMNS.items()},
 })
 
-be_long = cost_table.melt(id_vars="Role", value_vars=["Break-even months (no ramp)", "Break-even months (with ramp)"],
+be_long = cost_table.melt(id_vars="Role", value_vars=["Break-even, no ramp", "Break-even, with ramp"],
                           var_name="Series", value_name="Months")
-be_long["Series"] = be_long["Series"].str.extract(r"\((.*)\)")[0].str.capitalize()
-right.altair_chart(
+be_long["Series"] = be_long["Series"].str.replace("Break-even, ", "", regex=False).str.capitalize()
+st.altair_chart(
     alt.Chart(be_long).mark_bar(cornerRadiusEnd=4, height=10).encode(
         y=alt.Y("Role:N", sort=view_roles, title=None),
         yOffset=alt.YOffset("Series:N", sort=["No ramp", "With ramp"]),
