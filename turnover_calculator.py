@@ -52,6 +52,9 @@ DAYS_PER_YEAR = 365.25
 DAYS_PER_MONTH = DAYS_PER_YEAR / 12
 
 COST_ASSUMPTIONS_FILE = "role_cost_assumptions.csv"
+# Synthetic annual program budget per site (sized from each site's loaded
+# payroll at ~68% of budget). Edit the file to change it.
+PROGRAM_BUDGET_FILE = "program_budget_assumptions.csv"
 COST_COLUMNS = ["annual_salary", "fringe_rate", "recruiting_cost", "training_cost",
                 "days_to_fill", "coverage_premium"]
 
@@ -135,6 +138,14 @@ def load_cost_assumptions(path: str = COST_ASSUMPTIONS_FILE) -> pd.DataFrame:
     if (df[COST_COLUMNS] < 0).any().any():
         raise ValueError("cost assumptions must be non-negative")
     return df
+
+
+def load_program_budgets(path: str = PROGRAM_BUDGET_FILE) -> pd.Series:
+    """Annual program budget per site, indexed by site_id."""
+    budgets = pd.read_csv(path).set_index("site_id")["annual_program_budget"].astype(float)
+    if (budgets <= 0).any():
+        raise ValueError("program budgets must be positive")
+    return budgets
 
 
 def _period(start, end) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
@@ -390,6 +401,32 @@ def annual_turnover_cost(rates: pd.DataFrame, costs: pd.DataFrame) -> pd.DataFra
     out["departures_per_year"] = out["avg_headcount"] * out["turnover_rate"]
     out["annual_cost"] = out["departures_per_year"] * out["cost_per_departure"]
     return out
+
+
+def turnover_cost_summary(staff: pd.DataFrame, start, end, costs: pd.DataFrame,
+                          program_budget: Optional[float] = None) -> Dict[str, Optional[float]]:
+    """The annual cost of turnover and its supporting figures, for one view.
+
+    annual_cost:            departures per year x cost per departure, by role, summed
+    period_cost:            the same over the whole period (departures x cost per departure)
+    cost_per_departure:     period_cost / departures in the period (a blended average)
+    monthly_cost:           annual_cost / 12
+    share_of_budget:        annual_cost / program_budget (None without a budget)
+    """
+    rates = turnover_rates(staff, start, end, by="role")
+    annual = annual_turnover_cost(rates.dropna(subset=["turnover_rate"]), costs)["annual_cost"].sum()
+    departures = rates["separations"].reindex(costs.index).fillna(0)
+    period_cost = float((departures * costs["cost_per_departure"]).sum())
+    n = int(departures.sum())
+    return {
+        "annual_cost": float(annual),
+        "period_cost": period_cost,
+        "departures": n,
+        "cost_per_departure": period_cost / n if n else None,
+        "monthly_cost": float(annual) / 12,
+        "program_budget": program_budget,
+        "share_of_budget": float(annual) / program_budget if program_budget else None,
+    }
 
 
 def breakeven_months(upfront_cost: float, monthly_cost_avoided: float,

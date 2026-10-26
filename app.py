@@ -35,6 +35,7 @@ from turnover_calculator import (
     CENTRAL_ADMIN,
     COST_ASSUMPTIONS_FILE,
     FIELD,
+    PROGRAM_BUDGET_FILE,
     RAMP_MONTHS_TO_FULL,
     RAMP_START_PRODUCTIVITY,
     RETENTION_MONTHS,
@@ -42,7 +43,6 @@ from turnover_calculator import (
     TYPICAL_CASELOAD,
     VACANCY_COST_BASES,
     VACANCY_COST_BASIS,
-    annual_turnover_cost,
     breakeven_tenure,
     care_continuity_score,
     family_days_without_assigned_worker,
@@ -50,8 +50,10 @@ from turnover_calculator import (
     linear_ramp,
     load_cost_assumptions,
     load_data,
+    load_program_budgets,
     open_seats,
     retention_curves,
+    turnover_cost_summary,
     turnover_rates,
     vacancy_cost_crossover,
     vacancy_report,
@@ -72,6 +74,12 @@ st.markdown(
 }}
 .stApp h2, .stApp h3, [data-testid="stSidebar"] h2 {{
     color: {TEAL};
+}}
+/* Never cut a headline number off with an ellipsis: wrap it instead. */
+[data-testid="stMetricValue"], [data-testid="stMetricValue"] > div {{
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
 }}
 </style>
 """,
@@ -99,10 +107,10 @@ EDITABLE_COSTS = {
 def load():
     data = load_data(".")
     sites = pd.read_csv(SITES_FILE)
-    return data, sites, load_cost_assumptions(COST_ASSUMPTIONS_FILE)
+    return data, sites, load_cost_assumptions(COST_ASSUMPTIONS_FILE), load_program_budgets(PROGRAM_BUDGET_FILE)
 
 
-data, sites, default_costs = load()
+data, sites, default_costs, default_budgets = load()
 positions_all = data["positions"]
 site_names = dict(zip(sites["site_id"], sites["site_name"].str.replace(" (SYN)", "", regex=False)))
 site_names_short = {k: v.replace("Kinbridge ", "") for k, v in site_names.items()}
@@ -151,6 +159,19 @@ with st.sidebar:
                 "annual_salary": st.column_config.NumberColumn("Salary $", min_value=0, step=1000, format="dollar"),
             },
         )
+    with st.expander("Program budget", expanded=False):
+        st.caption(f"Synthetic annual program budget per site, from {PROGRAM_BUDGET_FILE}. "
+                   "Used for turnover cost as a share of budget.")
+        edited_budgets = st.data_editor(
+            pd.DataFrame({"site": [site_names_short[k] for k in default_budgets.index],
+                          "annual_program_budget": default_budgets.values}),
+            hide_index=True, disabled=["site"], key="budgets",
+            column_config={
+                "site": st.column_config.TextColumn("Site"),
+                "annual_program_budget": st.column_config.NumberColumn("Annual budget $", min_value=1,
+                                                                       step=50_000, format="dollar"),
+            },
+        )
     ramp_on = st.toggle("Apply ramp-up discount", value=True, key="ramp_on")
     ramp_start = st.slider("Month-1 productivity (RAMP_START_PRODUCTIVITY)", 0.10, 1.00,
                            RAMP_START_PRODUCTIVITY, 0.05, key="ramp_start")
@@ -169,6 +190,9 @@ schedule = linear_ramp(ramp_start, ramp_months)
 applied_schedule = schedule if ramp_on else None
 ramp_label = " / ".join(f"{p:.0%}" for p in schedule)
 
+budgets = dict(zip(default_budgets.index,
+                   edited_budgets["annual_program_budget"].fillna(pd.Series(default_budgets.values)).astype(float)))
+
 assumptions = default_costs.copy()
 for col in EDITABLE_COSTS:
     assumptions[col] = edited.set_index("role")[col].reindex(assumptions.index).fillna(default_costs[col])
@@ -180,7 +204,7 @@ for col in EDITABLE_COSTS:
 view = sc.View(site_id=None if site == ALL_SITES else site, program_areas=tuple(areas),
                staff_type=staff_type, roles=tuple(roles), start=start, end=end)
 settings = sc.Settings(assumptions=assumptions, ramp_on=ramp_on, ramp_start=ramp_start,
-                       ramp_months=ramp_months, basis=basis, caseload=caseload)
+                       ramp_months=ramp_months, basis=basis, caseload=caseload, budgets=budgets)
 scoped = sc.filter_view(data, view, role_order)
 staff, positions, assignments = scoped["staff"], scoped["positions"], scoped["assignments"]
 weights = {r: w for r, w in ROLE_CRITICALITY.items() if r in roles}
@@ -345,16 +369,16 @@ def fmt_pct(x: float) -> str:
 
 overall = turnover_rates(staff, start, end, by=None).loc["All"]
 vacancy = vacancy_report(staff, positions, start, end, by=None).loc["All"]
-by_role = turnover_rates(staff, start, end, by="role").reindex(view_roles)
 vacancy_by_role = vacancy_report(staff, positions, start, end, by="role").reindex(view_roles)
 costs_view = assumptions.loc[view_roles]
 costs_applied = cost_per_departure(costs_view, vacancy_by_role["avg_days_to_fill"], applied_schedule)
-annual_cost = annual_turnover_cost(by_role.dropna(subset=["turnover_rate"]), costs_applied)["annual_cost"].sum()
+cost = turnover_cost_summary(staff, start, end, costs_applied, settings.budget_for(view))
 continuity = care_continuity_score(assignments, start, end, weights) if weights and not assignments.empty else None
 gap_total = family_days_without_assigned_worker(staff, positions, start, end, caseload, by=None)
 gap_total = gap_total.loc["All"] if not gap_total.empty else None
 
-c1, c2, c3, c4, c5 = st.columns(5)
+# Two rows so every headline number has room: workforce, then cost and the continuity gap.
+c1, c2, c3 = st.columns(3)
 c1.metric("Turnover rate", fmt_pct(overall["turnover_rate"]),
           help="Separations / average headcount, annualized.")
 c1.caption(f"{fmt_pct(overall['voluntary_rate'])} voluntary · {fmt_pct(overall['involuntary_rate'])} involuntary "
@@ -366,9 +390,19 @@ c3.metric("Care-continuity score", "—" if continuity is None or pd.isna(contin
 c3.caption("1.00 = no caregiver changes" if continuity is not None
            else "No child-facing roles in this view" if not weights
            else "No children served in this view")
-c4.metric("Cost of turnover / yr", f"${annual_cost:,.0f}",
+c4, c5 = st.columns(2)
+c4.metric("Cost of turnover / yr", f"${cost['annual_cost']:,.0f}",
           help="Departures per year x fully-loaded cost per departure, for the roles in view.")
-c4.caption("with ramp-up discount" if ramp_on else "ramp-up discount off")
+supporting = [
+    f"${cost['cost_per_departure']:,.0f} per departure" if cost["cost_per_departure"] is not None
+    else "no departures in this view",
+    f"${cost['monthly_cost']:,.0f} per month",
+    f"{cost['share_of_budget']:.1%} of the ${cost['program_budget']:,.0f} program budget"
+    if cost["share_of_budget"] is not None else "no program budget for this view",
+]
+c4.caption("  \n".join(supporting) + "  \n" + ("with ramp-up discount" if ramp_on else "ramp-up discount off"),
+           help=f"Per departure: the period's {cost['departures']} departures cost ${cost['period_cost']:,.0f} "
+                "in all. Program budget: synthetic, for the sites in view (sidebar → Program budget).")
 GAP_LABEL = "Days without a worker, per affected family"
 GAP_HELP = ("For families whose caseworker or clinician seat went vacant: the average number of days they "
             "went without that worker. Affected families = the typical caseload of each seat that had a "

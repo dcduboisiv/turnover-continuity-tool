@@ -276,3 +276,25 @@ def test_funder_summary_for_the_sidebar_view(monkeypatch):
     assert context["view"]["site"] == "Kinbridge Brownsville Youth Residence"
     assert any(t.label.startswith("Funder summary") and "Kinbridge served" in t.value for t in at.text_area)
     assert any("99%" in w.value for w in at.warning)
+
+
+def test_cost_card_supporting_figures_match_the_engine():
+    import scenarios as sc
+    from turnover_calculator import load_cost_assumptions, load_program_budgets
+    at = run_app()
+    h = sc.headline(DATA, sc.View(), sc.Settings(load_cost_assumptions(),
+                                                 budgets=load_program_budgets().to_dict()),
+                    list(load_cost_assumptions().index))
+    assert metrics(at)["Cost of turnover / yr"] == f"${h['annual_turnover_cost']:,.0f}"   # still the headline
+    card = next(c.value for c in at.caption if "per departure" in c.value)
+    assert f"${h['avg_cost_per_departure']:,.0f} per departure" in card
+    assert f"${h['monthly_turnover_cost']:,.0f} per month" in card
+    assert f"{h['turnover_cost_share_of_budget']:.1%} of the $22,000,000 program budget" in card
+    assert h["departures"] == 177
+
+
+def test_site_view_uses_that_sites_budget():
+    at = run_app()
+    at.sidebar.selectbox(key="site").select("SITE-03").run()
+    card = next(c.value for c in at.caption if "per departure" in c.value)
+    assert "of the $3,100,000 program budget" in card

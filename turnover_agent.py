@@ -43,6 +43,7 @@ from turnover_calculator import (
     TYPICAL_CASELOAD,
     load_cost_assumptions,
     load_data,
+    load_program_budgets,
     retention_curves,
     vacancy_report,
 )
@@ -68,6 +69,9 @@ METRICS = {
     "affected_families": ("families affected by a caseworker or clinician vacancy", "higher"),
     "family_days_without_worker": ("total family-days without an assigned caseworker or clinician", "higher"),
     "annual_turnover_cost": ("annual cost of turnover", "higher"),
+    "avg_cost_per_departure": ("average cost per departure", "higher"),
+    "monthly_turnover_cost": ("monthly cost of turnover", "higher"),
+    "turnover_cost_share_of_budget": ("annual cost of turnover as a share of the program budget", "higher"),
     "open_seats_at_end": ("open seats at period end", "higher"),
     "avg_days_to_fill": ("average days to fill a seat", "higher"),
     "cost_per_departure": ("fully-loaded cost per departure", "higher"),
@@ -214,11 +218,12 @@ def fmt(metric: str, value) -> str:
     if isinstance(value, float) and math.isinf(value):
         return "never"
     if metric in ("turnover_rate", "voluntary_rate", "involuntary_rate", "vacancy_rate",
-                  "share_left_before_breakeven"):
+                  "share_left_before_breakeven", "turnover_cost_share_of_budget"):
         return f"{value:.1%}"
     if metric == "continuity_score":
         return f"{value:.2f}"
-    if metric in ("annual_turnover_cost", "cost_per_departure"):
+    if metric in ("annual_turnover_cost", "cost_per_departure", "avg_cost_per_departure",
+                  "monthly_turnover_cost", "program_budget"):
         return f"${value:,.0f}"
     if metric in ("breakeven_months_with_ramp", "breakeven_months_no_ramp", "crossover_months"):
         return f"{value:.1f}"
@@ -281,6 +286,9 @@ DEFINITIONS = {
     "family_days_without_worker": "days a caseworker or clinician seat sat empty x its typical caseload, summed",
     "breakeven_months": "months a new hire must stay before filling the seat pays back recruiting + training",
     "crossover_months": "months of overtime / temp coverage that cost as much as recruiting and onboarding",
+    "avg_cost_per_departure": "cost of all the period's departures / number of departures",
+    "turnover_cost_share_of_budget": "annual cost of turnover / annual program budget of the sites in view "
+                                     "(the budget is a synthetic planning input)",
 }
 
 
@@ -675,7 +683,7 @@ def main(argv: Optional[List[str]] = None) -> None:
     org = load_org()
     view = sc.View(site_id=args.site, start=pd.Timestamp(f"{args.start_year}-01-01"),
                    end=pd.Timestamp(f"{args.end_year + 1}-01-01"))
-    settings = sc.Settings(load_cost_assumptions())
+    settings = sc.Settings(load_cost_assumptions(), budgets=load_program_budgets().to_dict())
     client = get_client()
     if args.ask:
         result = ask(client, args.ask, org, view, settings)

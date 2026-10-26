@@ -9,6 +9,7 @@ from turnover_calculator import (
     family_days_without_assigned_worker,
     load_cost_assumptions,
     load_data,
+    load_program_budgets,
     turnover_rates,
     vacancy_report,
 )
@@ -205,3 +206,17 @@ def test_describe_change():
         "Caseworker turnover at East Harlem Family Center down 10% (that share of departures avoided; those staff stay)"
     assert sc.describe_change(change("caseload", 25, "Clinician"), names) == "Clinician typical caseload set to 25"
     assert sc.describe_change(change("recruiting_cost", 0.2, unit="relative"), names) == "all roles recruiting cost +20%"
+
+
+def test_budget_share_for_all_sites_and_one_site():
+    budgets = load_program_budgets().to_dict()
+    s = sc.Settings(ASSUMPTIONS.copy(), budgets=budgets)
+    h = sc.headline(DATA, sc.View(), s, ORDER)
+    assert h["program_budget"] == 22_000_000
+    assert h["turnover_cost_share_of_budget"] == pytest.approx(h["annual_turnover_cost"] / 22_000_000)
+    assert h["monthly_turnover_cost"] == pytest.approx(h["annual_turnover_cost"] / 12)
+    assert h["avg_cost_per_departure"] * h["departures"] == pytest.approx(
+        h["annual_turnover_cost"] * (HISTORY_END - HISTORY_START).days / 365.25)
+    one = sc.headline(DATA, sc.View(site_id="SITE-03"), s, ORDER)
+    assert one["program_budget"] == budgets["SITE-03"]
+    assert sc.headline(DATA, sc.View(), settings(), ORDER)["turnover_cost_share_of_budget"] is None

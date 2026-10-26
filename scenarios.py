@@ -33,13 +33,13 @@ from turnover_calculator import (
     TYPICAL_CASELOAD,
     VACANCY_COST_BASES,
     VACANCY_COST_BASIS,
-    annual_turnover_cost,
     breakeven_tenure,
     care_continuity_score,
     caseload_vacancy_family_days,
     cost_per_departure,
     linear_ramp,
     open_seats,
+    turnover_cost_summary,
     turnover_rates,
     vacancy_cost_crossover,
     vacancy_report,
@@ -65,6 +65,13 @@ class Settings:
     ramp_months: int = RAMP_MONTHS_TO_FULL
     basis: str = VACANCY_COST_BASIS
     caseload: Dict[str, int] = field(default_factory=lambda: dict(TYPICAL_CASELOAD))
+    budgets: Optional[Dict[str, float]] = None   # annual program budget by site_id
+
+    def budget_for(self, view: "View") -> Optional[float]:
+        """The program budget of the sites in a view (all sites without a site filter)."""
+        if not self.budgets:
+            return None
+        return self.budgets.get(view.site_id) if view.site_id else float(sum(self.budgets.values()))
 
     @property
     def schedule(self) -> Tuple[float, ...]:
@@ -140,8 +147,8 @@ def headline(data, view: View, settings: Settings, role_order: Sequence[str]) ->
     start, end = view.start, view.end
     overall = turnover_rates(staff, start, end, by=None).loc["All"]
     vacancy = vacancy_report(staff, positions, start, end, by=None).loc["All"]
-    by_role = turnover_rates(staff, start, end, by="role").reindex(f["roles"])
     _, costs = _role_costs(f, view, settings, settings.applied_schedule)
+    cost = turnover_cost_summary(staff, start, end, costs, settings.budget_for(view))
     weights = {r: w for r, w in ROLE_CRITICALITY.items() if r in f["roles"]}
     in_period = assignments[(assignments["start_date"] < end) & (assignments["end_date"] > start)]
     continuity = (care_continuity_score(assignments, start, end, weights)
@@ -160,8 +167,11 @@ def headline(data, view: View, settings: Settings, role_order: Sequence[str]) ->
         "open_seats_at_end": int(vacancy["open_at_end"]),
         "continuity_score": continuity,
         "children_served": int(in_period["child_id"].nunique()) if weights else None,
-        "annual_turnover_cost": float(annual_turnover_cost(by_role.dropna(subset=["turnover_rate"]),
-                                                           costs)["annual_cost"].sum()),
+        "annual_turnover_cost": cost["annual_cost"],
+        "avg_cost_per_departure": cost["cost_per_departure"],
+        "monthly_turnover_cost": cost["monthly_cost"],
+        "program_budget": cost["program_budget"],
+        "turnover_cost_share_of_budget": cost["share_of_budget"],
         "avg_days_per_affected_family": float(gap["family_days"].sum() / affected) if affected else None,
         "affected_families": affected,
         "family_days_without_worker": float(gap["family_days"].sum()),

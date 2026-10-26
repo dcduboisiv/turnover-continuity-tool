@@ -21,8 +21,10 @@ from turnover_calculator import (
     fill_events,
     linear_ramp,
     load_cost_assumptions,
+    load_program_budgets,
     open_seats,
     retention_curves,
+    turnover_cost_summary,
     turnover_rates,
     vacancy_cost_crossover,
     vacancy_report,
@@ -506,3 +508,35 @@ def test_average_is_blank_without_gaps():
     filled = GAP_STAFF[GAP_STAFF["position_id"] == "K3"]
     seat = GAP_POSITIONS[GAP_POSITIONS["position_id"] == "K3"]
     assert family_days_without_assigned_worker(filled, seat, START, END, by=None).empty
+
+
+def test_turnover_cost_summary_known_case():
+    # 2023: one caseworker (B) and one youth care worker (D) left; see STAFF above
+    costs = pd.DataFrame({"cost_per_departure": [20_000.0, 8_000.0]},
+                         index=pd.Index(["Caseworker", "Youth Care Worker"], name="role"))
+    c = turnover_cost_summary(STAFF, START, END, costs, program_budget=1_000_000)
+    assert c["departures"] == 2
+    assert c["period_cost"] == 28_000
+    assert c["cost_per_departure"] == 14_000                       # 28,000 / 2
+    # one year (365 days): annual = period cost x 365.25 / 365
+    assert c["annual_cost"] == pytest.approx(28_000 * 365.25 / 365)
+    assert c["monthly_cost"] == pytest.approx(c["annual_cost"] / 12)
+    assert c["share_of_budget"] == pytest.approx(c["annual_cost"] / 1_000_000)
+    assert turnover_cost_summary(STAFF, START, END, costs)["share_of_budget"] is None
+
+
+def test_cost_per_departure_uses_the_whole_period_not_one_year():
+    costs = pd.DataFrame({"cost_per_departure": [20_000.0, 8_000.0]},
+                         index=pd.Index(["Caseworker", "Youth Care Worker"], name="role"))
+    # 2023-2024 adds F, who leaves on 2024-01-01: 3 departures costing 20,000 + 8,000 + 8,000
+    two_years = turnover_cost_summary(STAFF, START, T("2025-01-01"), costs)
+    assert (two_years["departures"], two_years["period_cost"]) == (3, 36_000)
+    assert two_years["cost_per_departure"] == 12_000               # whole-period cost / whole-period departures
+    assert two_years["annual_cost"] == pytest.approx(36_000 * 365.25 / 731)   # spread over the 731 days
+    assert two_years["annual_cost"] / two_years["departures"] < two_years["cost_per_departure"]
+
+
+def test_shipped_program_budgets():
+    budgets = load_program_budgets()
+    assert list(budgets.index) == [f"SITE-0{i}" for i in range(1, 9)]
+    assert budgets.sum() == 22_000_000
