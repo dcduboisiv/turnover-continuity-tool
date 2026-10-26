@@ -63,7 +63,10 @@ METRICS = {
     "turnover_rate": ("annualized turnover rate", "higher"),
     "vacancy_rate": ("vacancy rate", "higher"),
     "continuity_score": ("care-continuity score (1.00 = one person in every child-facing role)", "higher"),
-    "family_days_without_worker": ("family-days without an assigned caseworker or clinician", "higher"),
+    "avg_days_per_affected_family": ("average days an affected family went without its assigned caseworker "
+                                     "or clinician", "higher"),
+    "affected_families": ("families affected by a caseworker or clinician vacancy", "higher"),
+    "family_days_without_worker": ("total family-days without an assigned caseworker or clinician", "higher"),
     "annual_turnover_cost": ("annual cost of turnover", "higher"),
     "open_seats_at_end": ("open seats at period end", "higher"),
     "avg_days_to_fill": ("average days to fill a seat", "higher"),
@@ -219,7 +222,7 @@ def fmt(metric: str, value) -> str:
         return f"${value:,.0f}"
     if metric in ("breakeven_months_with_ramp", "breakeven_months_no_ramp", "crossover_months"):
         return f"{value:.1f}"
-    if metric == "avg_headcount":
+    if metric in ("avg_headcount", "avg_days_per_affected_family"):
         return f"{value:,.1f}"
     return f"{value:,.0f}"
 
@@ -271,7 +274,11 @@ DEFINITIONS = {
     "turnover_rate": "departures / average headcount, annualized",
     "continuity_score": "distinct caregivers per child per child-facing role, weighted by role; "
                         "1.00 means one person in every role, higher is worse",
-    "family_days_without_worker": "days a caseworker or clinician seat sat empty x its typical caseload",
+    "avg_days_per_affected_family": "for families whose caseworker or clinician seat went vacant: average days "
+                                    "they went without that worker (total family-days / affected families)",
+    "affected_families": "the typical caseload of every caseworker or clinician seat that had a vacancy, "
+                         "counted once per seat",
+    "family_days_without_worker": "days a caseworker or clinician seat sat empty x its typical caseload, summed",
     "breakeven_months": "months a new hire must stay before filling the seat pays back recruiting + training",
     "crossover_months": "months of overtime / temp coverage that cost as much as recruiting and onboarding",
 }
@@ -529,7 +536,8 @@ language, no bullet points, no headings. Lead with the direct answer.
 If what-if changes were modeled, say what moved between "before" and "after". If there is a \
 breakdown, use its ranking (highest / lowest, worse_is) rather than comparing numbers \
 yourself; if all_equal is true, say the values are the same everywhere and point to a \
-metric in the rows that does differ, if one does.
+metric in the rows that does differ, if one does. For vacancy gaps, lead with affected \
+families and the average days per affected family; the family-days total is a detail.
 
 Use only numbers that appear in the data, written exactly as they appear there. Do not \
 calculate, round, add up, subtract or estimate anything yourself, so do not state a \
@@ -596,7 +604,9 @@ paragraphs, past tense, no bullet points, no headings.
 
 Cover, in this order: how many children were served, how stable the workforce was \
 (turnover, vacancies, early retention), and what that meant for children's continuity of \
-care (the continuity score and family-days without an assigned worker). Be candid about \
+care: the continuity score, and how many families went without an assigned caseworker or \
+clinician and for how many days on average (lead with those two; the family-days total is \
+a secondary detail). Be candid about \
 challenges as well as strengths. Do not promise plans, programs or results that are not in \
 the data, and do not mention costs.
 
@@ -616,7 +626,8 @@ def funder_context(org: Org, view: sc.View, settings: sc.Settings) -> dict:
     fill = vacancy_report(f["staff"], f["positions"], view.start, view.end, by="role")
     keep = ["children_served", "turnover_rate", "voluntary_rate", "involuntary_rate", "departures",
             "avg_headcount", "vacancy_rate", "seats", "open_seats_at_end", "continuity_score",
-            "family_days_without_worker", "caseload_vacancies"]
+            "affected_families", "avg_days_per_affected_family", "family_days_without_worker",
+            "caseload_vacancies"]
     context = {
         "organization": f"{ORG_NAME} (fictional)",
         "view": describe_view(view, org),

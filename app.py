@@ -45,7 +45,7 @@ from turnover_calculator import (
     annual_turnover_cost,
     breakeven_tenure,
     care_continuity_score,
-    caseload_vacancy_family_days,
+    family_days_without_assigned_worker,
     cost_per_departure,
     linear_ramp,
     load_cost_assumptions,
@@ -244,7 +244,7 @@ AI_DELTAS = {  # metric: label; lower is better for all of them
     "turnover_rate": "Turnover rate",
     "vacancy_rate": "Vacancy rate",
     "continuity_score": "Care-continuity score",
-    "family_days_without_worker": "Family-days without a worker",
+    "avg_days_per_affected_family": "Days without a worker, per affected family",
     "annual_turnover_cost": "Cost of turnover / yr",
 }
 
@@ -255,6 +255,8 @@ def delta_text(metric: str, after: float, before: float) -> str:
         return f"{diff * 100:+.1f} pts"
     if metric == "continuity_score":
         return f"{diff:+.2f}"
+    if metric == "avg_days_per_affected_family":
+        return f"{diff:+,.1f} days"
     return f"{diff:+,.0f}"
 
 api_key = anthropic_api_key()
@@ -349,8 +351,10 @@ costs_view = assumptions.loc[view_roles]
 costs_applied = cost_per_departure(costs_view, vacancy_by_role["avg_days_to_fill"], applied_schedule)
 annual_cost = annual_turnover_cost(by_role.dropna(subset=["turnover_rate"]), costs_applied)["annual_cost"].sum()
 continuity = care_continuity_score(assignments, start, end, weights) if weights and not assignments.empty else None
+gap_total = family_days_without_assigned_worker(staff, positions, start, end, caseload, by=None)
+gap_total = gap_total.loc["All"] if not gap_total.empty else None
 
-c1, c2, c3, c4 = st.columns(4)
+c1, c2, c3, c4, c5 = st.columns(5)
 c1.metric("Turnover rate", fmt_pct(overall["turnover_rate"]),
           help="Separations / average headcount, annualized.")
 c1.caption(f"{fmt_pct(overall['voluntary_rate'])} voluntary · {fmt_pct(overall['involuntary_rate'])} involuntary "
@@ -365,6 +369,17 @@ c3.caption("1.00 = no caregiver changes" if continuity is not None
 c4.metric("Cost of turnover / yr", f"${annual_cost:,.0f}",
           help="Departures per year x fully-loaded cost per departure, for the roles in view.")
 c4.caption("with ramp-up discount" if ramp_on else "ramp-up discount off")
+GAP_LABEL = "Days without a worker, per affected family"
+GAP_HELP = ("For families whose caseworker or clinician seat went vacant: the average number of days they "
+            "went without that worker. Affected families = the typical caseload of each seat that had a "
+            "gap, counted once per seat.")
+if gap_total is None:
+    c5.metric(GAP_LABEL, "—", help=GAP_HELP)
+    c5.caption("No caseworker or clinician vacancies in this view")
+else:
+    c5.metric(GAP_LABEL, f"{gap_total['avg_days_per_affected_family']:.1f} days", help=GAP_HELP)
+    c5.caption(f"{gap_total['affected_families']:,.0f} families affected · "
+               f"{gap_total['family_days']:,.0f} family-days in all")
 
 # ---------------------------------------------------------------------------
 # Cost of turnover and break-even tenure
@@ -437,37 +452,51 @@ st.dataframe(crossover_table, hide_index=True, width="stretch", column_config={
 # Continuity gap: family-days without an assigned worker
 # ---------------------------------------------------------------------------
 
-st.subheader("Continuity gap: family-days without an assigned caseworker or clinician")
-st.caption("Days a caseload-carrying field seat sat empty × its typical caseload. This counts how long "
-           "families went without a worker of record, not caregiver changes (that's the continuity score).")
-gap = caseload_vacancy_family_days(staff, positions, start, end, caseload)
-if gap.empty:
+st.subheader("Continuity gap: days without an assigned caseworker or clinician")
+st.caption("When a caseworker or clinician seat sits empty, the families on its caseload go without their "
+           "worker of record. This counts how long, not how often caregivers change (that's the continuity "
+           "score). Affected families = each vacant seat's typical caseload, counted once per seat.")
+if gap_total is None:
     st.info("No caseload-carrying seats (Caseworker, Clinician) were vacant in this view."
             if set(caseload) & set(roles) else
             "No caseload-carrying roles in this view. Direct care is shift-based and central admin "
             "has no family contact, so neither produces family-days.")
 else:
     g1, g2 = st.columns([1, 3])
-    g1.metric("Family-days without a worker", f"{gap['family_days'].sum():,.0f}")
-    g1.caption(f"{len(gap)} vacancies · {int(gap['still_open'].sum())} still open at period end")
-    by_site = (gap.assign(Site=gap["site_id"].map(site_names_short))
-               .groupby(["Site", "role"], as_index=False)
-               .agg(vacancies=("position_id", "size"), vacant_days=("days_vacant", "sum"),
-                    family_days=("family_days", "sum")))
-    site_totals = by_site.groupby("Site", as_index=False)["family_days"].sum().sort_values("family_days",
-                                                                                          ascending=False)
+    g1.metric(GAP_LABEL, f"{gap_total['avg_days_per_affected_family']:.1f} days", help=GAP_HELP)
+    g1.metric("Families affected", f"{gap_total['affected_families']:,.0f}")
+    g1.caption(f"{gap_total['affected_families']:,.0f} families experienced a gap, averaging "
+               f"{gap_total['avg_days_per_affected_family']:.1f} days each: "
+               f"{gap_total['family_days']:,.0f} family-days in all, across {int(gap_total['vacancies'])} "
+               f"vacancies ({int(gap_total['still_open'])} still open at period end).")
+    by_site = family_days_without_assigned_worker(staff, positions, start, end, caseload, by="site_id")
+    by_site = by_site.assign(Site=by_site.index.map(site_names_short)).reset_index(drop=True)
     g2.altair_chart(
-        alt.Chart(site_totals).mark_bar(cornerRadiusEnd=4, height=14, color=SERIES[0]).encode(
+        alt.Chart(by_site).mark_bar(cornerRadiusEnd=4, height=14, color=SERIES[0]).encode(
             y=alt.Y("Site:N", sort="-x", title=None),
-            x=alt.X("family_days:Q", title="Family-days without an assigned worker"),
-            tooltip=["Site", alt.Tooltip("family_days:Q", title="Family-days", format=",.0f")],
-        ).properties(height=max(120, 34 * len(site_totals))),
+            x=alt.X("avg_days_per_affected_family:Q", title="Days without a worker, per affected family"),
+            tooltip=["Site",
+                     alt.Tooltip("avg_days_per_affected_family:Q", title="Days per affected family", format=".1f"),
+                     alt.Tooltip("affected_families:Q", title="Families affected", format=",.0f"),
+                     alt.Tooltip("family_days:Q", title="Family-days in all", format=",.0f")],
+        ).properties(height=max(120, 34 * len(by_site))),
         use_container_width=True,
     )
     with st.expander("By site and role"):
-        st.dataframe(by_site.rename(columns={"role": "Role", "vacancies": "Vacancies",
-                                             "vacant_days": "Vacant days", "family_days": "Family-days"}),
-                     hide_index=True, width="stretch")
+        detail = family_days_without_assigned_worker(staff, positions, start, end, caseload,
+                                                     by=["site_id", "role"]).reset_index()
+        st.dataframe(pd.DataFrame({
+            "Site": detail["site_id"].map(site_names_short),
+            "Role": detail["role"],
+            "Families affected": detail["affected_families"],
+            "Days per affected family": detail["avg_days_per_affected_family"],
+            "Vacancies": detail["vacancies"],
+            "Vacant seat-days": detail["vacant_days"],
+            "Family-days": detail["family_days"],
+        }), hide_index=True, width="stretch", column_config={
+            "Days per affected family": st.column_config.NumberColumn(format="%.1f"),
+            "Family-days": st.column_config.NumberColumn(format="localized"),
+        })
 
 # ---------------------------------------------------------------------------
 # Retention cohorts

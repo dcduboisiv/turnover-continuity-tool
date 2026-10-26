@@ -39,7 +39,7 @@ youth care worker because staff left.
       funder-report summary for any site and period, in the app and as a
       CLI. Claude parses and writes; the calculator does every
       calculation, and every number Claude writes is checked against the
-      calculator's output. 146 passing tests, with every Claude call
+      calculator's output. 150 passing tests, with every Claude call
       mocked (no API key or spend needed). *Built; not yet run against
       the live API.*
 
@@ -72,8 +72,9 @@ youth care worker because staff left.
     (highest / lowest, which direction is worse, all-equal), and Claude
     writes 2–4 sentences from the computed results.
   - **`funder_report()`**: a view's children served, turnover,
-    vacancies, 12-month retention, days-to-fill, continuity score and
-    family-days (plus year-by-year figures for multi-year periods) go to
+    vacancies, 12-month retention, days-to-fill, continuity score,
+    families affected by a vacancy gap and their average days without a
+    worker (plus year-by-year figures for multi-year periods) go to
     Claude, which writes a 120–180 word grant-report paragraph. Costs are
     left out.
   - **Number check**: every number the model writes (dollars,
@@ -109,8 +110,9 @@ youth care worker because staff left.
     annual cost of turnover; cost per departure and break-even tenure by
     role, with and without the ramp (the toggle decides which one feeds the
     annual cost and the "left before break-even" share); vacancy cost
-    crossover; family-days without an assigned caseworker or clinician,
-    total and by site; retention by hire cohort; open seats with days open
+    crossover; days without an assigned caseworker or clinician per
+    affected family (the headline), families affected, and the family-days
+    total as detail, overall and by site; retention by hire cohort; open seats with days open
     so far.
   - **Opens on a full view:** all sites, all staff, 2023–2025. A sweep of
     every site × staff type × period showed it is the broadest view with
@@ -197,7 +199,7 @@ Periods are half-open, `[start, end)`. A person is employed from
 | Break-even tenure | `breakeven_tenure(assumptions, schedule=..., basis=...)` | (Recruiting + training) ÷ what a filled seat saves each month, with that saving discounted by the ramp-up. Shows the months with and without the ramp, and the share of departures who left before break-even. The monthly saving follows `VACANCY_COST_BASIS` (below). |
 | Vacancy cost crossover | `vacancy_cost_crossover(assumptions)` | Recruiting and onboarding cost ÷ monthly coverage premium: how many months of overtime/temp coverage cost as much as hiring a replacement. Uses the coverage premium regardless of `VACANCY_COST_BASIS`, and no ramp, so under the default basis it equals break-even tenure without the ramp. |
 | Care-continuity score | `care_continuity_score(assignments, start, end)` | Per child: distinct people in each child-facing role, weighted by criticality (caseworker 1.0, youth care worker 0.9, clinician 0.8). 1.0 means one person in every role. Averaged across children, overall or by site. Counts **caregiver changes**. |
-| Continuity gap: family-days without an assigned caseworker or clinician | `family_days_without_assigned_worker(staff, positions, start, end, by=...)` | For every vacancy in a caseload-carrying field seat: days the seat was empty × that seat's typical caseload, summed. Caseloads come from `TYPICAL_CASELOAD` (Caseworker 10, Clinician 20), with optional per-seat overrides. Only field seats in those roles count: a vacant Direct Care seat (shift-based, no individual cases) or central admin seat produces no family-days. Measures **how long families go without a worker of record**, not how often their caregiver changes. It is seat-based, so it counts the gap even when a coworker covers the cases. Seats still open at the end count up to the period end. |
+| Continuity gap: family-days without an assigned caseworker or clinician | `family_days_without_assigned_worker(staff, positions, start, end, by=...)` | For every vacancy in a caseload-carrying field seat: days the seat was empty × that seat's typical caseload, summed. Caseloads come from `TYPICAL_CASELOAD` (Caseworker 10, Clinician 20), with optional per-seat overrides. Only field seats in those roles count: a vacant Direct Care seat (shift-based, no individual cases) or central admin seat produces no family-days. Measures **how long families go without a worker of record**, not how often their caregiver changes. It is seat-based, so it counts the gap even when a coworker covers the cases. Seats still open at the end count up to the period end. Also reports **affected families** (the typical caseload of every seat that had a gap, counted once per seat even if it was vacant twice) and **average days per affected family** (family-days ÷ affected families). The dashboard leads with these two ("680 families experienced a gap, averaging 93.8 days each") and keeps the family-days total as detail. |
 
 **Ramp-up discount.** By default a new hire works at 50% in month 1, 75%
 in month 2 and 100% from month 3, a linear ramp. It is set by
@@ -227,7 +229,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python generate_sample_data.py      # rewrite the sample CSVs
 .venv/bin/python turnover_calculator.py       # print the report
 .venv/bin/streamlit run app.py                # the dashboard
-.venv/bin/python -m pytest -q                 # 146 tests
+.venv/bin/python -m pytest -q                 # 150 tests
 .venv/bin/python turnover_agent.py --ask "Which site has the worst break-even tenure for caseworkers?"
 ```
 

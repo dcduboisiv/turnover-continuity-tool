@@ -147,6 +147,8 @@ def headline(data, view: View, settings: Settings, role_order: Sequence[str]) ->
     continuity = (care_continuity_score(assignments, start, end, weights)
                   if weights and not in_period.empty else None)
     gap = caseload_vacancy_family_days(staff, positions, start, end, settings.caseload)
+    # each seat with a gap affects its caseload once, however many times it was vacant
+    affected = int(gap.drop_duplicates("position_id")["caseload"].sum())
     return {
         "turnover_rate": overall["turnover_rate"],
         "voluntary_rate": overall["voluntary_rate"],
@@ -160,6 +162,8 @@ def headline(data, view: View, settings: Settings, role_order: Sequence[str]) ->
         "children_served": int(in_period["child_id"].nunique()) if weights else None,
         "annual_turnover_cost": float(annual_turnover_cost(by_role.dropna(subset=["turnover_rate"]),
                                                            costs)["annual_cost"].sum()),
+        "avg_days_per_affected_family": float(gap["family_days"].sum() / affected) if affected else None,
+        "affected_families": affected,
         "family_days_without_worker": float(gap["family_days"].sum()),
         "caseload_vacancies": int(len(gap)),
     }
@@ -189,6 +193,8 @@ def role_table(data, view: View, settings: Settings, role_order: Sequence[str]) 
     out["share_left_before_breakeven"] = be["share_left_before_breakeven"]
     out["crossover_months"] = vacancy_cost_crossover(a)["crossover_months"]
     out["family_days_without_worker"] = gap.groupby("role")["family_days"].sum().reindex(roles)
+    out["affected_families"] = gap.drop_duplicates("position_id").groupby("role")["caseload"].sum().reindex(roles)
+    out["avg_days_per_affected_family"] = out["family_days_without_worker"] / out["affected_families"]
     return out
 
 
@@ -205,7 +211,8 @@ def site_table(data, view: View, settings: Settings, role_order: Sequence[str],
         roles = filter_view(data, site_view, role_order)["roles"]
         if len(roles) == 1:
             h.update(role_table(data, site_view, settings, role_order).iloc[0].drop(
-                ["turnover_rate", "departures", "vacancy_rate", "family_days_without_worker"]).to_dict())
+                ["turnover_rate", "departures", "vacancy_rate", "family_days_without_worker",
+                 "affected_families", "avg_days_per_affected_family"]).to_dict())
         rows[site_id] = h
     return pd.DataFrame.from_dict(rows, orient="index").rename_axis("site_id")
 

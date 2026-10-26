@@ -479,3 +479,30 @@ def test_no_vacancies_returns_an_empty_table():
     assert vacancy_spells(filled, seats, START, END).empty
     total = family_days_without_assigned_worker(filled, seats, START, END, by=None)
     assert total.empty
+
+
+def test_average_days_per_affected_family_known_case():
+    total = family_days_without_assigned_worker(GAP_STAFF, GAP_POSITIONS, START, END, by=None).loc["All"]
+    # seats with a gap: K1, K2, K4, K5 (caseload 10 each) and N1 (caseload 20)
+    assert total["affected_families"] == 4 * 10 + 20
+    assert total["avg_days_per_affected_family"] == pytest.approx((CW_DAYS * 10 + 30 * 20) / 60)   # 89.3
+    assert total["affected_families"] * total["avg_days_per_affected_family"] == pytest.approx(total["family_days"])
+    by_role = family_days_without_assigned_worker(GAP_STAFF, GAP_POSITIONS, START, END)
+    assert by_role.loc["Caseworker", "avg_days_per_affected_family"] == pytest.approx(CW_DAYS / 4)   # 119
+    assert by_role.loc["Clinician", "avg_days_per_affected_family"] == 30
+
+
+def test_a_seat_vacant_twice_counts_its_families_once():
+    staff = roster([("a", "K1", "Caseworker", "2020-01-01", "2023-03-01", "Voluntary"),
+                    ("b", "K1", "Caseworker", "2023-03-11", "2023-06-01", "Voluntary"),   # 10-day gap
+                    ("c", "K1", "Caseworker", "2023-06-21", None, None)])                 # 20-day gap
+    seat = GAP_POSITIONS[GAP_POSITIONS["position_id"] == "K1"]
+    total = family_days_without_assigned_worker(staff, seat, START, END, by=None).loc["All"]
+    assert (total["vacancies"], total["family_days"], total["affected_families"]) == (2, 300, 10)
+    assert total["avg_days_per_affected_family"] == 30      # each of the 10 families waited 10 + 20 days
+
+
+def test_average_is_blank_without_gaps():
+    filled = GAP_STAFF[GAP_STAFF["position_id"] == "K3"]
+    seat = GAP_POSITIONS[GAP_POSITIONS["position_id"] == "K3"]
+    assert family_days_without_assigned_worker(filled, seat, START, END, by=None).empty

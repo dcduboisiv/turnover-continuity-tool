@@ -296,12 +296,22 @@ def family_days_without_assigned_worker(staff: pd.DataFrame, positions: pd.DataF
                                         caseload: Mapping[str, int] = TYPICAL_CASELOAD,
                                         seat_caseload: Optional[Mapping[str, int]] = None,
                                         by: By = "role") -> pd.DataFrame:
-    """CONTINUITY GAP summed over all caseload-carrying vacancies in the period."""
+    """CONTINUITY GAP summed over all caseload-carrying vacancies in the period.
+
+    affected_families: the caseload of every seat that had a gap, counted
+    once per seat even if it was vacant more than once (the same families
+    waited each time). avg_days_per_affected_family = family_days /
+    affected_families: how long an affected family went without its worker.
+    """
     spells, keys = _keys(caseload_vacancy_family_days(staff, positions, start, end, caseload, seat_caseload), by)
-    return spells.groupby(keys).agg(vacancies=("position_id", "size"),
-                                    still_open=("still_open", "sum"),
-                                    vacant_days=("days_vacant", "sum"),
-                                    family_days=("family_days", "sum"))
+    out = spells.groupby(keys).agg(vacancies=("position_id", "size"),
+                                   still_open=("still_open", "sum"),
+                                   vacant_days=("days_vacant", "sum"),
+                                   family_days=("family_days", "sum"))
+    seats = spells.drop_duplicates("position_id")
+    out["affected_families"] = seats.groupby(keys)["caseload"].sum().reindex(out.index, fill_value=0)
+    out["avg_days_per_affected_family"] = out["family_days"] / out["affected_families"].where(out["affected_families"] > 0)
+    return out
 
 
 def retention_curves(staff: pd.DataFrame, as_of, months: Iterable[int] = RETENTION_MONTHS,

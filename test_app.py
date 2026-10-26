@@ -17,6 +17,9 @@ DATA = load_data(".")
 SITES = ["__all__"] + [f"SITE-0{i}" for i in range(1, 9)]
 
 
+GAP = "Days without a worker, per affected family"
+
+
 def run_app() -> AppTest:
     at = AppTest.from_file("app.py", default_timeout=60)
     at.run()
@@ -48,7 +51,7 @@ def test_default_view_is_full_and_non_empty():
     assert at.sidebar.radio(key="staff_type").value == "All staff"
     m = metrics(at)
     for label in ["Turnover rate", "Vacancy rate", "Care-continuity score", "Cost of turnover / yr",
-                  "Family-days without a worker"]:
+                  GAP, "Families affected"]:
         assert m[label] not in ("—", "0", "$0", "0.0%"), label
     assert hints(at) == []                                 # no section is empty
     assert len(at.get("arrow_vega_lite_chart")) == 3       # break-even, family-days, retention
@@ -63,7 +66,20 @@ def test_headline_metrics_match_the_engine():
     assert m["Vacancy rate"] == f"{vacancy['vacancy_rate']:.1%}"
     assert m["Care-continuity score"] == f"{care_continuity_score(DATA['assignments'], HISTORY_START, HISTORY_END):.2f}"
     gap = family_days_without_assigned_worker(staff, positions, HISTORY_START, HISTORY_END, by=None)
-    assert m["Family-days without a worker"] == f"{gap.loc['All', 'family_days']:,.0f}"
+    g = gap.loc["All"]
+    assert m[GAP] == f"{g['avg_days_per_affected_family']:.1f} days"
+    assert m["Families affected"] == f"{g['affected_families']:,.0f}"
+
+
+def test_gap_headline_tells_families_times_days_with_the_total_as_detail():
+    at = run_app()
+    m = metrics(at)
+    families, days = num(m["Families affected"]), num(m[GAP].replace(" days", ""))
+    total = family_days_without_assigned_worker(DATA["staff"], DATA["positions"], HISTORY_START, HISTORY_END,
+                                                by=None).loc["All", "family_days"]
+    assert families * days == pytest.approx(total, rel=1e-3)
+    assert any(f"{families:,.0f} families experienced a gap" in c.value and f"{total:,.0f} family-days" in c.value
+               for c in at.caption)
 
 
 def test_open_seats_table_matches_engine():
@@ -126,10 +142,12 @@ def test_vacancy_cost_basis_toggle():
 
 def test_caseload_inputs_scale_family_days():
     at = run_app()
-    base = num(metrics(at)["Family-days without a worker"])
+    base_days, base_families = num(metrics(at)[GAP].replace(" days", "")), num(metrics(at)["Families affected"])
     at.sidebar.number_input(key="caseload_Caseworker").set_value(20)
     at.sidebar.number_input(key="caseload_Clinician").set_value(40).run()
-    assert num(metrics(at)["Family-days without a worker"]) == pytest.approx(2 * base)
+    # twice the families on each seat, each waiting just as long
+    assert num(metrics(at)["Families affected"]) == pytest.approx(2 * base_families)
+    assert num(metrics(at)[GAP].replace(" days", "")) == pytest.approx(base_days)
 
 
 def test_single_year_period():
