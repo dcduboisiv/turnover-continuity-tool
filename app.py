@@ -445,7 +445,8 @@ COST_COLUMNS = {  # header: (tooltip, format)
                             "%.1f"),
     "Break-even, with ramp": ("Break-even tenure in months, with the ramp-up discount.", "%.1f"),
     "Left before break-even": ("Share of the period's departures who left before break-even"
-                               + (" (with ramp)." if ramp_on else " (no ramp)."), "%.0f%%"),
+                               + (" (with ramp)." if ramp_on else " (no ramp).")
+                               + " – means no departures to measure.", "text"),
 }
 cost_table = pd.DataFrame({
     "Departures": be_applied["departures"],
@@ -453,7 +454,10 @@ cost_table = pd.DataFrame({
     "Cost, with ramp": costs_ramp["cost_per_departure"],
     "Break-even, no ramp": be_ramp["breakeven_months_no_ramp"],
     "Break-even, with ramp": be_ramp["breakeven_months"],
-    "Left before break-even": be_applied["share_left_before_breakeven"] * 100,
+    # Text: the table always draws a missing number as "None", so an unmeasurable
+    # share (no departures) is written out as "–" instead
+    "Left before break-even": be_applied["share_left_before_breakeven"].map(
+        lambda v: "–" if pd.isna(v) else f"{v:.0%}"),
 }).rename_axis("Role").reset_index()
 
 
@@ -470,8 +474,9 @@ dollars = {"format": "dollar", "step": 1}
 # screen scrolls the table sideways instead of cutting headers off.
 st.dataframe(cost_table, hide_index=True, width="stretch", column_config={
     "Role": st.column_config.TextColumn(width=170, pinned=True),
-    **{name: st.column_config.NumberColumn(name, width=header_width(name), help=tip,
-                                           **(dollars if f == "dollar" else {"format": f} if f else {}))
+    **{name: st.column_config.TextColumn(name, width=header_width(name), help=tip) if f == "text" else
+       st.column_config.NumberColumn(name, width=header_width(name), help=tip,
+                                     **(dollars if f == "dollar" else {"format": f} if f else {}))
        for name, (tip, f) in COST_COLUMNS.items()},
 })
 

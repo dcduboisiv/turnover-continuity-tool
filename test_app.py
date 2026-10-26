@@ -1,5 +1,6 @@
 import itertools
 
+import pandas as pd
 import pytest
 from streamlit.testing.v1 import AppTest
 
@@ -306,3 +307,10 @@ def test_site_view_uses_that_sites_budget():
     at.sidebar.selectbox(key="site").select("SITE-03").run()
     card = next(c.value for c in at.caption if "per departure" in c.value)
     assert "of the $3.10M program budget" in card
+
+
+def test_left_before_breakeven_shows_a_dash_when_nothing_to_measure():
+    table = run_app().main.dataframe[0].value.set_index("Role")["Left before break-even"]
+    assert table["Finance Associate"] == "–"          # no finance departures in the period
+    assert table["Caseworker"] == "31%"
+    assert "None" not in table.tolist()
