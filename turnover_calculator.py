@@ -219,6 +219,20 @@ def vacancy_report(staff: pd.DataFrame, positions: pd.DataFrame, start, end,
     return out
 
 
+def open_seats(staff: pd.DataFrame, positions: pd.DataFrame, as_of) -> pd.DataFrame:
+    """Seats with no one in them on the last day before as_of (exclusive),
+    with how long each has been empty. vacant_since is NaT for a seat
+    empty since before the data starts."""
+    as_of = pd.Timestamp(as_of)
+    held = staff[staff["hire_date"] < as_of]
+    term = held["termination_date"]
+    in_seat = set(held.loc[term.isna() | (term >= as_of), "position_id"])
+    out = positions[~positions["position_id"].isin(in_seat)].copy()
+    out["vacant_since"] = out["position_id"].map(held.groupby("position_id")["termination_date"].max())
+    out["days_open"] = (as_of - out["vacant_since"]).dt.days
+    return out.reset_index(drop=True)
+
+
 def vacancy_spells(staff: pd.DataFrame, positions: pd.DataFrame, start, end,
                    role: Optional[str] = None) -> pd.DataFrame:
     """Every stretch a seat sat empty, clipped to [start, end).
@@ -243,6 +257,7 @@ def vacancy_spells(staff: pd.DataFrame, positions: pd.DataFrame, start, end,
         if vacant_from is not None:
             rows.append((p.position_id, p.site_id, vacant_from, end, True))
     out = pd.DataFrame(rows, columns=["position_id", "site_id", "vacancy_start", "vacancy_end", "still_open"])
+    out = out.astype({"vacancy_start": "datetime64[ns]", "vacancy_end": "datetime64[ns]", "still_open": bool})
     out["vacancy_start"] = out["vacancy_start"].clip(lower=start)
     out["vacancy_end"] = out["vacancy_end"].clip(upper=end)
     out["days_vacant"] = (out["vacancy_end"] - out["vacancy_start"]).dt.days

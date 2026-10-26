@@ -1,7 +1,10 @@
-# Tested on Python 3.9 with pandas 2.3 and numpy 2.0.
-# Upper bounds stop the next untested major version from sneaking in.
+# Runtime dependencies for Streamlit Community Cloud (entrypoint: app.py).
+# Tested on Python 3.9 with pandas 2.3, numpy 2.0, streamlit 1.50, altair 5.5.
+# Upper bounds stop the next untested major version from reaching the deployed app.
 pandas>=2.0,<4
 numpy>=1.24,<3
+streamlit>=1.50,<2
+altair>=5,<6
 
-# Tests
+# Tests (not needed by the app; harmless on Cloud)
 pytest>=7.0

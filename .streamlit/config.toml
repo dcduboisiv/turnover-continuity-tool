@@ -1,0 +1,6 @@
+[theme]
+base = "light"
+primaryColor = "#15314B"              # navy: buttons, sliders, focus rings
+backgroundColor = "#F5F4F0"           # warm off-white page background
+secondaryBackgroundColor = "#E9E7E1"  # sidebar, inputs, table header
+textColor = "#1F2A37"                 # dark slate body text

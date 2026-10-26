@@ -21,6 +21,7 @@ from turnover_calculator import (
     fill_events,
     linear_ramp,
     load_cost_assumptions,
+    open_seats,
     retention_curves,
     turnover_rates,
     vacancy_cost_crossover,
@@ -461,3 +462,20 @@ def test_family_days_configurable_caseload_and_per_seat_override():
     # seats not in the override keep their role's typical caseload
     assert per_seat.set_index("position_id")["family_days"].to_dict() == {
         "K1": 30 * 12, "K2": 61 * 10, "K4": 20 * 10, "K5": 365 * 10, "N1": 30 * 18}
+
+
+def test_open_seats_hand_calculated():
+    seats = open_seats(GAP_STAFF, GAP_POSITIONS, END).set_index("position_id")
+    assert set(seats.index) == {"K2", "K5", "Y1", "A1"}
+    assert seats.loc["K2", "days_open"] == 61              # since 2023-11-01
+    assert seats.loc["Y1", "days_open"] == 245             # since 2023-05-01
+    assert seats.loc["A1", "days_open"] == 334             # since 2023-02-01
+    assert pd.isna(seats.loc["K5", "vacant_since"])        # empty since before the data
+
+
+def test_no_vacancies_returns_an_empty_table():
+    filled = GAP_STAFF[GAP_STAFF["position_id"] == "K3"]
+    seats = GAP_POSITIONS[GAP_POSITIONS["position_id"] == "K3"]
+    assert vacancy_spells(filled, seats, START, END).empty
+    total = family_days_without_assigned_worker(filled, seats, START, END, by=None)
+    assert total.empty

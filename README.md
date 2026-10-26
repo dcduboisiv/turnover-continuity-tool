@@ -27,8 +27,45 @@ youth care worker because staff left.
       score, and family-days without an assigned caseworker or clinician.
       Every record is tagged field or central admin. 48 passing unit
       tests. *Done.*
-- [ ] **MVP 2 — Streamlit dashboard.**
+- [x] **MVP 2 — Streamlit dashboard.** Sidebar filters (site, program
+      area, field / central admin, role, period) and every engine setting
+      (per-role costs, ramp-up on/off and its two settings, vacancy-cost
+      basis, caseloads), with headline metrics, cost and break-even with and
+      without the ramp, vacancy cost crossover, family-days by site,
+      retention curves and open seats. Built for Streamlit Community Cloud.
+      88 passing tests in all, including 38 that run the app headlessly.
 - [ ] **MVP 3 — AI layer.**
+
+## MVP 2 — What's here
+
+- `app.py` — the dashboard. Every number comes from `turnover_calculator.py`;
+  the app filters the data, passes the sidebar settings through, and shows
+  the results.
+  - **Sidebar:** site, program area, staff type (all / field / central
+    admin, read from `staff_type`), role, and period (any run of years in
+    2023–2025). Assumptions: an editable per-role cost table (recruiting,
+    training, OT / temp premium, salary) seeded from
+    `role_cost_assumptions.csv`; ramp-up on/off plus
+    `RAMP_START_PRODUCTIVITY` and `RAMP_MONTHS_TO_FULL`; vacancy-cost basis;
+    caseloads per caseload-carrying role.
+  - **Main panel:** turnover rate, vacancy rate, care-continuity score and
+    annual cost of turnover; cost per departure and break-even tenure by
+    role, with and without the ramp (the toggle decides which one feeds the
+    annual cost and the "left before break-even" share); vacancy cost
+    crossover; family-days without an assigned caseworker or clinician,
+    total and by site; retention by hire cohort; open seats with days open
+    so far.
+  - **Opens on a full view:** all sites, all staff, 2023–2025. A sweep of
+    every site × staff type × period showed it is the broadest view with
+    no empty section. Narrower views (for example central admin, which has
+    no caseload or children) say what's missing instead of showing zeros.
+  - With one site selected, the continuity score covers the children the
+    site serves: those placed there, plus those assigned a worker from
+    there. That way the Fordham clinic, where no children are placed,
+    still gets a score.
+- `test_app.py` — runs the app headlessly with Streamlit's AppTest: the
+  default view is non-empty, headline numbers match the engine, every
+  setting flows through, and every site × staff type renders.
 
 ## MVP 1 — What's here
 
@@ -77,7 +114,7 @@ management, 22% clinical, 13% admin.
 ### Field vs. central admin
 
 Every staff and seat record has a `staff_type` column. Scope by this
-column, not by role name; MVP 2's field / central-admin filter will read
+column, not by role name; MVP 2's field / central-admin filter reads
 it directly.
 
 | staff_type | Meaning | Roles |
@@ -132,5 +169,17 @@ tenure:
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python generate_sample_data.py      # rewrite the sample CSVs
 .venv/bin/python turnover_calculator.py       # print the report
-.venv/bin/python -m pytest -q                 # 48 tests
+.venv/bin/streamlit run app.py                # the dashboard
+.venv/bin/python -m pytest -q                 # 88 tests
 ```
+
+## Deploy (Streamlit Community Cloud)
+
+1. Push `main` to GitHub.
+2. At share.streamlit.io, choose **Create app**, pick
+   `dcduboisiv/turnover-continuity-tool`, branch `main`, main file `app.py`.
+3. No secrets are needed: MVP 2 has no API calls.
+4. After a later push that changes an imported module
+   (`turnover_calculator.py`, `generate_sample_data.py`), reboot the app
+   (**Manage app → Reboot**), because Cloud keeps imported modules in
+   memory.
