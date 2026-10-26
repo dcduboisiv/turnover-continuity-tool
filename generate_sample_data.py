@@ -98,15 +98,18 @@ SITES = [
 
 # Generation parameters per role: the "true" rates the calculator should
 # recover. annual_turnover is separations per filled seat per year.
+# staff_type: "field" = direct family/child contact (direct care, case
+# management, clinical, including supervisors); "central_admin" =
+# internal-only back-office roles with no family contact.
 ROLES = {
-    "Youth Care Worker":        {"program_area": "Direct Care",     "annual_turnover": 0.55, "voluntary_share": 0.70, "days_to_fill": 35},
-    "Residential Counselor":    {"program_area": "Direct Care",     "annual_turnover": 0.45, "voluntary_share": 0.72, "days_to_fill": 40},
-    "Caseworker":               {"program_area": "Case Management", "annual_turnover": 0.42, "voluntary_share": 0.80, "days_to_fill": 55},
-    "Case Supervisor":          {"program_area": "Case Management", "annual_turnover": 0.20, "voluntary_share": 0.85, "days_to_fill": 70},
-    "Clinician":                {"program_area": "Clinical",        "annual_turnover": 0.25, "voluntary_share": 0.88, "days_to_fill": 85},
-    "Clinical Supervisor":      {"program_area": "Clinical",        "annual_turnover": 0.15, "voluntary_share": 0.90, "days_to_fill": 100},
-    "Administrative Assistant": {"program_area": "Admin",           "annual_turnover": 0.14, "voluntary_share": 0.70, "days_to_fill": 30},
-    "Finance Associate":        {"program_area": "Admin",           "annual_turnover": 0.10, "voluntary_share": 0.75, "days_to_fill": 45},
+    "Youth Care Worker":        {"program_area": "Direct Care",     "staff_type": "field",         "annual_turnover": 0.55, "voluntary_share": 0.70, "days_to_fill": 35},
+    "Residential Counselor":    {"program_area": "Direct Care",     "staff_type": "field",         "annual_turnover": 0.45, "voluntary_share": 0.72, "days_to_fill": 40},
+    "Caseworker":               {"program_area": "Case Management", "staff_type": "field",         "annual_turnover": 0.42, "voluntary_share": 0.80, "days_to_fill": 55},
+    "Case Supervisor":          {"program_area": "Case Management", "staff_type": "field",         "annual_turnover": 0.20, "voluntary_share": 0.85, "days_to_fill": 70},
+    "Clinician":                {"program_area": "Clinical",        "staff_type": "field",         "annual_turnover": 0.25, "voluntary_share": 0.88, "days_to_fill": 85},
+    "Clinical Supervisor":      {"program_area": "Clinical",        "staff_type": "field",         "annual_turnover": 0.15, "voluntary_share": 0.90, "days_to_fill": 100},
+    "Administrative Assistant": {"program_area": "Admin",           "staff_type": "central_admin", "annual_turnover": 0.14, "voluntary_share": 0.70, "days_to_fill": 30},
+    "Finance Associate":        {"program_area": "Admin",           "staff_type": "central_admin", "annual_turnover": 0.10, "voluntary_share": 0.75, "days_to_fill": 45},
 }
 
 FAMILY_SERVICES_STAFFING = {"Caseworker": 16, "Case Supervisor": 3, "Clinician": 4,
@@ -156,7 +159,8 @@ def build_positions() -> pd.DataFrame:
         for role, count in SITE_STAFFING[site["site_id"]].items():
             for _ in range(count):
                 rows.append({"position_id": f"POS-{len(rows) + 1:03d}", "site_id": site["site_id"],
-                             "role": role, "program_area": ROLES[role]["program_area"]})
+                             "role": role, "program_area": ROLES[role]["program_area"],
+                             "staff_type": ROLES[role]["staff_type"]})
     return pd.DataFrame(rows)
 
 
@@ -192,7 +196,7 @@ def build_staff(rng: np.random.Generator, positions: pd.DataFrame) -> pd.DataFra
                 continue   # left before the history window
             rows.append({
                 "position_id": pos.position_id, "site_id": pos.site_id,
-                "role": pos.role, "program_area": pos.program_area,
+                "role": pos.role, "program_area": pos.program_area, "staff_type": pos.staff_type,
                 "hire_date": _date(hire), "termination_date": _date(term),
                 "termination_type": "" if term is None else ("Voluntary" if voluntary else "Involuntary"),
                 "status": "Active" if term is None else "Terminated",

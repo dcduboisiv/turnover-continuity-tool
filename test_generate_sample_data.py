@@ -69,7 +69,7 @@ def test_every_person_and_child_is_labeled_synthetic(data):
 
 def test_roster_has_required_fields_and_program_areas(data):
     staff = data["staff"]
-    for col in ["hire_date", "termination_date", "role", "program_area", "site_id",
+    for col in ["hire_date", "termination_date", "role", "program_area", "staff_type", "site_id",
                 "termination_type", "tenure_days", "tenure_months"]:
         assert col in staff.columns
     assert set(staff["program_area"]) == {"Direct Care", "Case Management", "Clinical", "Admin"}
@@ -103,6 +103,21 @@ def test_one_person_per_seat_at_a_time(data):
     # only the last person in each seat can still be active
     assert (staff.groupby("position_id")["termination_date"].apply(lambda s: s.iloc[:-1].notna().all())).all()
     assert set(staff["position_id"]) <= set(data["positions"]["position_id"])
+
+
+def test_every_staff_and_seat_record_has_a_staff_type(data):
+    for df in (data["staff"], data["positions"]):
+        assert set(df["staff_type"]) == {"field", "central_admin"}
+        # central admin is exactly the internal-only Admin program area
+        assert ((df["staff_type"] == "central_admin") == (df["program_area"] == "Admin")).all()
+    # supervisors have family contact and count as field
+    sup = data["staff"]["role"].isin(["Case Supervisor", "Clinical Supervisor"])
+    assert (data["staff"].loc[sup, "staff_type"] == "field").all()
+
+
+def test_only_field_staff_are_assigned_to_children(data):
+    types = data["staff"].set_index("staff_id")["staff_type"]
+    assert (data["assignments"]["staff_id"].map(types) == "field").all()
 
 
 # ---------------------------------------------------------------------------

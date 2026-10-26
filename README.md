@@ -24,8 +24,9 @@ youth care worker because staff left.
       generator, turnover / vacancy / retention math, cost of turnover,
       break-even tenure with a ramp-up discount and a choice of
       vacancy-cost basis, vacancy cost crossover, the care-continuity
-      score, and family-days without an assigned caseworker. 43 passing
-      unit tests. *Done.*
+      score, and family-days without an assigned caseworker or clinician.
+      Every record is tagged field or central admin. 48 passing unit
+      tests. *Done.*
 - [ ] **MVP 2 — Streamlit dashboard.**
 - [ ] **MVP 3 — AI layer.**
 
@@ -37,8 +38,8 @@ youth care worker because staff left.
     family services centers, two youth residences and a clinic.
   - `synthetic_positions.csv` — 199 budgeted seats by site and role.
   - `synthetic_staff.csv` — everyone who held a seat during 2023–2025:
-    hire date, termination date, role, program area, site, voluntary /
-    involuntary, tenure. IDs start `SYN-S-`.
+    hire date, termination date, role, program area, `staff_type`, site,
+    voluntary / involuntary, tenure. IDs start `SYN-S-`.
   - `synthetic_children.csv`, `synthetic_assignments.csv` — children (IDs
     `SYN-C-`, no names or case details) and which staff member covered
     each of their child-facing roles, day by day.
@@ -73,6 +74,21 @@ management, 22% clinical, 13% admin.
   coworker who covers the gap, then the new hire, so caregiver churn comes
   out of the same staff history.
 
+### Field vs. central admin
+
+Every staff and seat record has a `staff_type` column. Scope by this
+column, not by role name; MVP 2's field / central-admin filter will read
+it directly.
+
+| staff_type | Meaning | Roles |
+|---|---|---|
+| `field` | Direct family / child contact | Direct Care (Youth Care Worker, Residential Counselor), Case Management (Caseworker, Case Supervisor), Clinical (Clinician, Clinical Supervisor) |
+| `central_admin` | Internal only, no family contact | Admin (Administrative Assistant, Finance Associate) and any future back-office role |
+
+Field roles that carry an individual family caseload: **Caseworker** and
+**Clinician**. Supervisors are field staff without a caseload. Direct care
+is field but shift-based.
+
 ### What the engine computes
 
 Periods are half-open, `[start, end)`. A person is employed from
@@ -80,14 +96,14 @@ Periods are half-open, `[start, end)`. A person is employed from
 
 | Output | Function | Definition |
 |---|---|---|
-| Turnover rate | `turnover_rates(staff, start, end, by=...)` | Separations / average headcount, annualized; split voluntary vs. involuntary. By role, program area, site, or overall. |
+| Turnover rate | `turnover_rates(staff, start, end, by=...)` | Separations / average headcount, annualized; split voluntary vs. involuntary. By role, program area, staff type, site, or overall. |
 | Vacancy & days-to-fill | `vacancy_report(staff, positions, start, end, by=...)` | Vacant seat-days / total seat-days; average days from a departure to the backfill hire; seats open at the end. |
 | Retention curves | `retention_curves(staff, as_of, months=...)` | Share of each hire cohort still employed 3, 6, 12, 18 and 24 months after hire. Only hires old enough to be measured count. |
 | Cost per departure | `cost_per_departure(assumptions, days_to_fill=...)` | Recruiting + training + vacancy coverage (days-to-fill × loaded monthly cost × coverage premium) + ramp-up productivity loss. The report uses observed days-to-fill. |
 | Break-even tenure | `breakeven_tenure(assumptions, schedule=..., basis=...)` | (Recruiting + training) ÷ what a filled seat saves each month, with that saving discounted by the ramp-up. Shows the months with and without the ramp, and the share of departures who left before break-even. The monthly saving follows `VACANCY_COST_BASIS` (below). |
 | Vacancy cost crossover | `vacancy_cost_crossover(assumptions)` | Recruiting and onboarding cost ÷ monthly coverage premium: how many months of overtime/temp coverage cost as much as hiring a replacement. Uses the coverage premium regardless of `VACANCY_COST_BASIS`, and no ramp, so under the default basis it equals break-even tenure without the ramp. |
 | Care-continuity score | `care_continuity_score(assignments, start, end)` | Per child: distinct people in each child-facing role, weighted by criticality (caseworker 1.0, youth care worker 0.9, clinician 0.8). 1.0 means one person in every role. Averaged across children, overall or by site. Counts **caregiver changes**. |
-| Continuity gap: family-days without an assigned caseworker | `family_days_without_caseworker(staff, positions, start, end, by=...)` | For every caseworker vacancy in the period: days the seat was empty × that seat's typical caseload (`TYPICAL_CASEWORKER_CASELOAD`, default 10, or a per-seat mapping), summed. Measures **how long families go without a caseworker of record**, not how often their caregiver changes. It is seat-based, so it counts the gap even when a coworker covers the cases. Seats still open at the end count up to the period end. |
+| Continuity gap: family-days without an assigned caseworker or clinician | `family_days_without_assigned_worker(staff, positions, start, end, by=...)` | For every vacancy in a caseload-carrying field seat: days the seat was empty × that seat's typical caseload, summed. Caseloads come from `TYPICAL_CASELOAD` (Caseworker 10, Clinician 20), with optional per-seat overrides. Only field seats in those roles count: a vacant Direct Care seat (shift-based, no individual cases) or central admin seat produces no family-days. Measures **how long families go without a worker of record**, not how often their caregiver changes. It is seat-based, so it counts the gap even when a coworker covers the cases. Seats still open at the end count up to the period end. |
 
 **Ramp-up discount.** By default a new hire works at 50% in month 1, 75%
 in month 2 and 100% from month 3, a linear ramp. It is set by
@@ -116,5 +132,5 @@ tenure:
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python generate_sample_data.py      # rewrite the sample CSVs
 .venv/bin/python turnover_calculator.py       # print the report
-.venv/bin/python -m pytest -q                 # 43 tests
+.venv/bin/python -m pytest -q                 # 48 tests
 ```

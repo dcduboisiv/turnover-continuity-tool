@@ -14,8 +14,8 @@ and child-caregiver assignments, and computes:
   recruiting and onboarding a replacement
 - a care-continuity risk score: distinct caregivers per child, weighted by
   role criticality
-- a continuity gap: family-days without an assigned caseworker (vacant
-  caseworker seat-days x typical caseload)
+- a continuity gap: family-days without an assigned caseworker or
+  clinician (vacant caseload-carrying field seat-days x typical caseload)
 
 Conventions used everywhere:
 
@@ -68,9 +68,17 @@ RAMP_MONTHS_TO_FULL = 3
 VACANCY_COST_BASES = ("coverage_premium", "full_salary")
 VACANCY_COST_BASIS = "coverage_premium"
 
-# Families / children normally assigned to one caseworker, for the
-# family-days-without-a-caseworker continuity gap.
-TYPICAL_CASEWORKER_CASELOAD = 10
+# staff_type on every staff and seat record: "field" roles have direct
+# family / child contact; "central_admin" roles are internal only. Scope
+# by this column rather than by role name.
+FIELD, CENTRAL_ADMIN = "field", "central_admin"
+STAFF_TYPES = (FIELD, CENTRAL_ADMIN)
+
+# Field roles that carry an individual family caseload, and the typical
+# caseload of one seat. Only vacancies in these roles produce family-days
+# in the continuity gap. Direct care is shift-based (no individual cases)
+# and central admin has no family contact, so neither is listed.
+TYPICAL_CASELOAD = {"Caseworker": 10, "Clinician": 20}
 
 # How much a change of person in each child-facing role disrupts a child's
 # care. Roles not listed here are not counted in the continuity score.
@@ -241,31 +249,40 @@ def vacancy_spells(staff: pd.DataFrame, positions: pd.DataFrame, start, end,
     return out[out["days_vacant"] > 0].reset_index(drop=True)
 
 
-def caseworker_vacancy_family_days(staff: pd.DataFrame, positions: pd.DataFrame, start, end,
-                                   caseload: Union[int, Mapping[str, int]] = TYPICAL_CASEWORKER_CASELOAD,
-                                   role: str = "Caseworker") -> pd.DataFrame:
-    """CONTINUITY GAP: family-days without an assigned caseworker, per vacancy.
+def caseload_vacancy_family_days(staff: pd.DataFrame, positions: pd.DataFrame, start, end,
+                                 caseload: Mapping[str, int] = TYPICAL_CASELOAD,
+                                 seat_caseload: Optional[Mapping[str, int]] = None) -> pd.DataFrame:
+    """CONTINUITY GAP: family-days without an assigned caseworker (or
+    clinician), per vacancy.
 
-    family_days = days the caseworker seat was empty in [start, end) x that
-    seat's typical caseload. `caseload` is one number for every seat or a
-    mapping of position_id -> caseload. This measures how long families go
-    without a caseworker of record; it is separate from the care-continuity
-    score, which counts changes of caregiver.
+    Only seats with staff_type "field" in a role listed in `caseload`
+    count; any other vacancy has no caseload attached and produces no
+    family-days. family_days = days the seat was empty in [start, end) x
+    its typical caseload (`caseload` by role, overridden per seat by
+    `seat_caseload`, position_id -> caseload). This measures how long
+    families go without a worker of record; it is separate from the
+    care-continuity score, which counts changes of caregiver.
     """
-    spells = vacancy_spells(staff, positions, start, end, role=role)
-    if isinstance(caseload, Mapping):
-        spells["caseload"] = spells["position_id"].map(caseload).fillna(TYPICAL_CASEWORKER_CASELOAD)
-    else:
-        spells["caseload"] = caseload
+    listed = positions["role"].isin(list(caseload))
+    not_field = sorted(set(positions.loc[listed & (positions["staff_type"] != FIELD), "role"]))
+    if not_field:
+        raise ValueError(f"caseload roles must be field roles: {not_field}")
+    seats = positions[listed & (positions["staff_type"] == FIELD)]
+    spells = vacancy_spells(staff, seats, start, end).merge(
+        seats[["position_id", "role", "staff_type"]], on="position_id")
+    spells["caseload"] = spells["role"].map(caseload)
+    if seat_caseload:
+        spells["caseload"] = spells["position_id"].map(seat_caseload).fillna(spells["caseload"])
     spells["family_days"] = spells["days_vacant"] * spells["caseload"]
     return spells
 
 
-def family_days_without_caseworker(staff: pd.DataFrame, positions: pd.DataFrame, start, end,
-                                   caseload: Union[int, Mapping[str, int]] = TYPICAL_CASEWORKER_CASELOAD,
-                                   by: By = None) -> pd.DataFrame:
-    """CONTINUITY GAP summed over all caseworker vacancies in the period."""
-    spells, keys = _keys(caseworker_vacancy_family_days(staff, positions, start, end, caseload), by)
+def family_days_without_assigned_worker(staff: pd.DataFrame, positions: pd.DataFrame, start, end,
+                                        caseload: Mapping[str, int] = TYPICAL_CASELOAD,
+                                        seat_caseload: Optional[Mapping[str, int]] = None,
+                                        by: By = "role") -> pd.DataFrame:
+    """CONTINUITY GAP summed over all caseload-carrying vacancies in the period."""
+    spells, keys = _keys(caseload_vacancy_family_days(staff, positions, start, end, caseload, seat_caseload), by)
     return spells.groupby(keys).agg(vacancies=("position_id", "size"),
                                     still_open=("still_open", "sum"),
                                     vacant_days=("days_vacant", "sum"),
@@ -484,6 +501,7 @@ def run_report(data_dir: str = ".", start=HISTORY_START, end=HISTORY_END,
     by_role = turnover_rates(staff, start, end, by="role")
     last_year = pd.Timestamp(end) - pd.DateOffset(years=1)
     return {
+        "turnover_by_staff_type": turnover_rates(staff, start, end, by="staff_type"),
         "turnover_by_program_area": turnover_rates(staff, start, end, by="program_area"),
         "turnover_by_role": by_role,
         "vacancy_by_role": vacancy,
@@ -494,8 +512,8 @@ def run_report(data_dir: str = ".", start=HISTORY_START, end=HISTORY_END,
         "vacancy_cost_crossover": vacancy_cost_crossover(assumptions),
         "continuity_by_site_last_12_months": care_continuity_score(
             data["assignments"], last_year, end, by="site_id").to_frame("continuity_score"),
-        "continuity_gap_family_days_without_caseworker": family_days_without_caseworker(
-            staff, positions, start, end, by="site_id"),
+        "continuity_gap_family_days_without_assigned_worker": family_days_without_assigned_worker(
+            staff, positions, start, end, by=["site_id", "role"]),
     }
 
 

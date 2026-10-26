@@ -8,15 +8,16 @@ from turnover_calculator import (
     RAMP_START_PRODUCTIVITY,
     RAMP_UP_SCHEDULE,
     ROLE_CRITICALITY,
-    TYPICAL_CASEWORKER_CASELOAD,
+    STAFF_TYPES,
+    TYPICAL_CASELOAD,
     VACANCY_COST_BASIS,
     breakeven_months,
     breakeven_tenure,
     care_continuity,
     care_continuity_score,
-    caseworker_vacancy_family_days,
+    caseload_vacancy_family_days,
     cost_per_departure,
-    family_days_without_caseworker,
+    family_days_without_assigned_worker,
     fill_events,
     linear_ramp,
     load_cost_assumptions,
@@ -39,6 +40,7 @@ def roster(rows):
     df["termination_type"] = df["termination_type"].fillna("")
     df["program_area"] = df["role"].map({"Caseworker": "Case Management",
                                          "Youth Care Worker": "Direct Care"})
+    df["staff_type"] = "field"
     term = df["termination_date"].fillna(END)
     df["tenure_days"] = (term - df["hire_date"]).dt.days
     return df
@@ -88,6 +90,14 @@ def test_turnover_rate_hand_calculated_by_role():
     assert (ycw["separations"], ycw["involuntary_separations"]) == (1, 1)
     assert ycw["turnover_rate"] == pytest.approx(365.25 / (182 + 365))
     assert ycw["voluntary_rate"] == 0
+
+
+def test_turnover_rate_by_staff_type():
+    staff = pd.concat([STAFF, roster([("G", "P6", "Caseworker", "2020-01-01", "2023-07-02", "Voluntary")])
+                       .assign(staff_type="central_admin")], ignore_index=True)
+    r = turnover_rates(staff, START, END, by="staff_type")
+    assert r.loc["field", "separations"] == 2
+    assert r.loc["central_admin", "turnover_rate"] == pytest.approx(365.25 / 182)
 
 
 def test_turnover_rate_annualizes_a_partial_year():
@@ -372,16 +382,18 @@ def test_continuity_weights_change_the_score_and_period_clips():
 
 
 # ---------------------------------------------------------------------------
-# Continuity gap: family-days without an assigned caseworker
+# Continuity gap: family-days without an assigned caseworker / clinician
 # ---------------------------------------------------------------------------
 
-# 2023. Countable caseworker vacancies:
-#   K1  leaves 2023-03-15, backfilled 2023-04-14          30 days
-#   K2  leaves 2023-11-01, never refilled (still open)    61 days
-#   K3  in seat all year                                    0
-#   K4  holder left 2022-12-01, backfill 2023-01-21       20 days inside 2023
-#   K5  never staffed at all                             365 days (still open)
-#   Y1  a youth care worker vacancy: not a caseworker seat, ignored
+# 2023. Countable vacancies:
+#   K1  caseworker  leaves 2023-03-15, backfilled 2023-04-14      30 days
+#   K2  caseworker  leaves 2023-11-01, never refilled (open)       61 days
+#   K3  caseworker  in seat all year                                0
+#   K4  caseworker  holder left 2022-12-01, backfill 2023-01-21    20 days inside 2023
+#   K5  caseworker  never staffed at all                          365 days (open)
+#   N1  clinician   leaves 2023-06-01, backfilled 2023-07-01      30 days
+#   Y1  youth care  field but shift-based: vacant, no caseload     ignored
+#   A1  admin       central_admin: vacant, no family contact       ignored
 GAP_STAFF = roster([
     ("k1a", "K1", "Caseworker", "2020-01-01", "2023-03-15", "Voluntary"),
     ("k1b", "K1", "Caseworker", "2023-04-14", None, None),
@@ -389,13 +401,23 @@ GAP_STAFF = roster([
     ("k3a", "K3", "Caseworker", "2019-01-01", None, None),
     ("k4a", "K4", "Caseworker", "2018-01-01", "2022-12-01", "Voluntary"),
     ("k4b", "K4", "Caseworker", "2023-01-21", None, None),
+    ("n1a", "N1", "Clinician", "2020-01-01", "2023-06-01", "Voluntary"),
+    ("n1b", "N1", "Clinician", "2023-07-01", None, None),
     ("y1a", "Y1", "Youth Care Worker", "2020-01-01", "2023-05-01", "Voluntary"),
+    ("a1a", "A1", "Administrative Assistant", "2020-01-01", "2023-02-01", "Voluntary"),
 ])
 GAP_POSITIONS = pd.DataFrame({
-    "position_id": ["K1", "K2", "K3", "K4", "K5", "Y1"],
-    "site_id": ["S1", "S1", "S1", "S2", "S2", "S2"],
-    "role": ["Caseworker"] * 5 + ["Youth Care Worker"],
+    "position_id": ["K1", "K2", "K3", "K4", "K5", "N1", "Y1", "A1"],
+    "site_id": ["S1", "S1", "S1", "S2", "S2", "S2", "S2", "S1"],
+    "role": ["Caseworker"] * 5 + ["Clinician", "Youth Care Worker", "Administrative Assistant"],
+    "staff_type": ["field"] * 7 + ["central_admin"],
 })
+CW_DAYS = 30 + 61 + 20 + 365                               # 476
+
+
+def test_default_caseloads_and_staff_types():
+    assert TYPICAL_CASELOAD == {"Caseworker": 10, "Clinician": 20}
+    assert STAFF_TYPES == ("field", "central_admin")
 
 
 def test_vacancy_spells_hand_calculated():
@@ -405,22 +427,37 @@ def test_vacancy_spells_hand_calculated():
     assert s.loc["K4", "vacancy_start"] == START           # clipped to the period
 
 
-def test_family_days_without_caseworker_known_case():
-    assert TYPICAL_CASEWORKER_CASELOAD == 10
-    total = family_days_without_caseworker(GAP_STAFF, GAP_POSITIONS, START, END).loc["All"]
-    assert total["vacancies"] == 4 and total["still_open"] == 2
-    assert total["vacant_days"] == 30 + 61 + 20 + 365
-    assert total["family_days"] == (30 + 61 + 20 + 365) * 10                  # 4,760
+def test_family_days_known_case():
+    total = family_days_without_assigned_worker(GAP_STAFF, GAP_POSITIONS, START, END, by=None).loc["All"]
+    assert total["vacancies"] == 5 and total["still_open"] == 2
+    assert total["vacant_days"] == CW_DAYS + 30
+    assert total["family_days"] == CW_DAYS * 10 + 30 * 20                     # 4,760 + 600
 
-    by_site = family_days_without_caseworker(GAP_STAFF, GAP_POSITIONS, START, END, by="site_id")
-    assert by_site["family_days"].to_dict() == {"S1": (30 + 61) * 10, "S2": (20 + 365) * 10}
+    by_role = family_days_without_assigned_worker(GAP_STAFF, GAP_POSITIONS, START, END)
+    assert by_role["family_days"].to_dict() == {"Caseworker": 4_760, "Clinician": 600}
+    by_site = family_days_without_assigned_worker(GAP_STAFF, GAP_POSITIONS, START, END, by="site_id")
+    assert by_site["family_days"].to_dict() == {"S1": (30 + 61) * 10, "S2": (20 + 365) * 10 + 600}
 
 
-def test_family_days_uses_each_seats_caseload():
-    per_seat = caseworker_vacancy_family_days(GAP_STAFF, GAP_POSITIONS, START, END,
-                                              caseload={"K1": 12, "K2": 8})
-    # K4 and K5 aren't in the mapping and fall back to the typical caseload
+def test_family_days_ignore_shift_based_and_central_admin_vacancies():
+    spells = caseload_vacancy_family_days(GAP_STAFF, GAP_POSITIONS, START, END)
+    assert not {"Y1", "A1"} & set(spells["position_id"])
+    assert set(spells["staff_type"]) == {"field"}
+    # scoped by staff_type, not role name: a central_admin seat never counts,
+    # even when its role has a caseload configured
+    relabeled = GAP_POSITIONS.assign(staff_type=["field"] * 5 + ["central_admin"] * 3)
+    with pytest.raises(ValueError, match="Clinician"):
+        caseload_vacancy_family_days(GAP_STAFF, relabeled, START, END)
+    no_clinicians = caseload_vacancy_family_days(GAP_STAFF, relabeled, START, END, caseload={"Caseworker": 10})
+    assert no_clinicians["family_days"].sum() == CW_DAYS * 10
+
+
+def test_family_days_configurable_caseload_and_per_seat_override():
+    flat = family_days_without_assigned_worker(GAP_STAFF, GAP_POSITIONS, START, END,
+                                               caseload={"Caseworker": 15, "Clinician": 25}, by=None)
+    assert flat.loc["All", "family_days"] == CW_DAYS * 15 + 30 * 25
+    per_seat = caseload_vacancy_family_days(GAP_STAFF, GAP_POSITIONS, START, END,
+                                            seat_caseload={"K1": 12, "N1": 18})
+    # seats not in the override keep their role's typical caseload
     assert per_seat.set_index("position_id")["family_days"].to_dict() == {
-        "K1": 30 * 12, "K2": 61 * 8, "K4": 20 * 10, "K5": 365 * 10}
-    flat = family_days_without_caseworker(GAP_STAFF, GAP_POSITIONS, START, END, caseload=15)
-    assert flat.loc["All", "family_days"] == (30 + 61 + 20 + 365) * 15
+        "K1": 30 * 12, "K2": 61 * 10, "K4": 20 * 10, "K5": 365 * 10, "N1": 30 * 18}
