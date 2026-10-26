@@ -1,0 +1,368 @@
+staff_id,position_id,site_id,role,program_area,hire_date,termination_date,termination_type,status,tenure_days,tenure_months,is_synthetic
+SYN-S-0001,POS-001,SITE-01,Administrative Assistant,Admin,2004-11-21,2023-02-06,Involuntary,Terminated,6651,218.5,True
+SYN-S-0002,POS-010,SITE-01,Finance Associate,Admin,2006-09-03,,,Active,7060,232.0,True
+SYN-S-0003,POS-093,SITE-04,Clinician,Clinical,2007-04-18,2024-03-17,Voluntary,Terminated,6178,203.0,True
+SYN-S-0004,POS-197,SITE-08,Clinical Supervisor,Clinical,2007-07-21,2024-10-10,Voluntary,Terminated,6291,206.7,True
+SYN-S-0005,POS-011,SITE-01,Finance Associate,Admin,2008-05-05,,,Active,6450,211.9,True
+SYN-S-0006,POS-063,SITE-03,Case Supervisor,Case Management,2008-11-01,2023-09-20,Voluntary,Terminated,5436,178.6,True
+SYN-S-0007,POS-062,SITE-03,Case Supervisor,Case Management,2008-12-14,2025-10-16,Voluntary,Terminated,6150,202.1,True
+SYN-S-0008,POS-008,SITE-01,Administrative Assistant,Admin,2009-08-26,2025-08-26,Voluntary,Terminated,5844,192.0,True
+SYN-S-0009,POS-060,SITE-03,Caseworker,Case Management,2009-10-22,,,Active,5915,194.3,True
+SYN-S-0010,POS-183,SITE-07,Clinician,Clinical,2009-12-24,2023-02-19,Voluntary,Terminated,4805,157.9,True
+SYN-S-0011,POS-082,SITE-04,Caseworker,Case Management,2010-07-01,,,Active,5663,186.1,True
+SYN-S-0012,POS-095,SITE-04,Clinical Supervisor,Clinical,2010-11-27,,,Active,5514,181.2,True
+SYN-S-0013,POS-003,SITE-01,Administrative Assistant,Admin,2011-01-27,2024-07-25,Involuntary,Terminated,4928,161.9,True
+SYN-S-0014,POS-092,SITE-04,Clinician,Clinical,2011-04-01,,,Active,5389,177.1,True
+SYN-S-0015,POS-079,SITE-04,Caseworker,Case Management,2011-08-19,2024-08-14,Involuntary,Terminated,4744,155.9,True
+SYN-S-0016,POS-127,SITE-05,Clinician,Clinical,2011-08-19,2025-10-31,Voluntary,Terminated,5187,170.4,True
+SYN-S-0017,POS-018,SITE-01,Finance Associate,Admin,2011-09-11,,,Active,5226,171.7,True
+SYN-S-0018,POS-154,SITE-06,Administrative Assistant,Admin,2012-01-20,,,Active,5095,167.4,True
+SYN-S-0019,POS-119,SITE-05,Residential Counselor,Direct Care,2012-07-05,,,Active,4928,161.9,True
+SYN-S-0020,POS-068,SITE-03,Clinician,Clinical,2012-07-18,2025-11-06,Voluntary,Terminated,4859,159.6,True
+SYN-S-0021,POS-007,SITE-01,Administrative Assistant,Admin,2012-07-19,,,Active,4914,161.4,True
+SYN-S-0022,POS-150,SITE-06,Clinician,Clinical,2012-09-11,,,Active,4860,159.7,True
+SYN-S-0023,POS-162,SITE-07,Youth Care Worker,Direct Care,2012-11-18,2024-04-23,Voluntary,Terminated,4174,137.1,True
+SYN-S-0024,POS-070,SITE-03,Administrative Assistant,Admin,2012-11-26,,,Active,4784,157.2,True
+SYN-S-0025,POS-013,SITE-01,Finance Associate,Admin,2013-04-25,,,Active,4634,152.2,True
+SYN-S-0026,POS-031,SITE-02,Caseworker,Case Management,2013-08-03,2025-01-20,Voluntary,Terminated,4188,137.6,True
+SYN-S-0027,POS-091,SITE-04,Clinician,Clinical,2013-09-08,,,Active,4498,147.8,True
+SYN-S-0028,POS-071,SITE-03,Administrative Assistant,Admin,2014-01-08,2025-04-29,Involuntary,Terminated,4129,135.7,True
+SYN-S-0029,POS-145,SITE-06,Case Supervisor,Case Management,2014-01-28,,,Active,4356,143.1,True
+SYN-S-0030,POS-129,SITE-06,Caseworker,Case Management,2014-03-28,,,Active,4297,141.2,True
+SYN-S-0031,POS-067,SITE-03,Clinician,Clinical,2014-05-22,,,Active,4242,139.4,True
+SYN-S-0032,POS-097,SITE-04,Administrative Assistant,Admin,2014-06-12,2023-04-06,Involuntary,Terminated,3220,105.8,True
+SYN-S-0033,POS-037,SITE-02,Case Supervisor,Case Management,2014-07-12,,,Active,4191,137.7,True
+SYN-S-0034,POS-126,SITE-05,Clinician,Clinical,2014-08-05,2025-02-04,Voluntary,Terminated,3836,126.0,True
+SYN-S-0035,POS-020,SITE-02,Caseworker,Case Management,2014-09-22,2024-06-10,Voluntary,Terminated,3549,116.6,True
+SYN-S-0036,POS-151,SITE-06,Clinician,Clinical,2015-03-01,,,Active,3959,130.1,True
+SYN-S-0037,POS-103,SITE-05,Youth Care Worker,Direct Care,2015-06-20,2023-03-03,Voluntary,Terminated,2813,92.4,True
+SYN-S-0038,POS-051,SITE-03,Caseworker,Case Management,2015-08-13,2023-06-27,Involuntary,Terminated,2875,94.5,True
+SYN-S-0039,POS-173,SITE-07,Youth Care Worker,Direct Care,2016-01-12,2023-02-04,Voluntary,Terminated,2580,84.8,True
+SYN-S-0040,POS-146,SITE-06,Case Supervisor,Case Management,2016-04-25,,,Active,3538,116.2,True
+SYN-S-0041,POS-040,SITE-02,Clinician,Clinical,2016-07-08,,,Active,3464,113.8,True
+SYN-S-0042,POS-052,SITE-03,Caseworker,Case Management,2016-09-08,,,Active,3402,111.8,True
+SYN-S-0043,POS-135,SITE-06,Caseworker,Case Management,2016-09-10,2023-04-14,Voluntary,Terminated,2407,79.1,True
+SYN-S-0044,POS-112,SITE-05,Youth Care Worker,Direct Care,2016-10-01,,,Active,3379,111.0,True
+SYN-S-0045,POS-194,SITE-08,Clinician,Clinical,2017-03-06,,,Active,3223,105.9,True
+SYN-S-0046,POS-006,SITE-01,Administrative Assistant,Admin,2017-04-07,,,Active,3191,104.8,True
+SYN-S-0047,POS-176,SITE-07,Residential Counselor,Direct Care,2017-06-03,,,Active,3134,103.0,True
+SYN-S-0048,POS-038,SITE-02,Case Supervisor,Case Management,2017-06-19,2024-04-10,Voluntary,Terminated,2487,81.7,True
+SYN-S-0049,POS-014,SITE-01,Finance Associate,Admin,2017-06-22,,,Active,3115,102.3,True
+SYN-S-0050,POS-030,SITE-02,Caseworker,Case Management,2017-06-25,2023-05-08,Voluntary,Terminated,2143,70.4,True
+SYN-S-0051,POS-131,SITE-06,Caseworker,Case Management,2017-06-28,,,Active,3109,102.1,True
+SYN-S-0052,POS-152,SITE-06,Clinical Supervisor,Clinical,2017-07-05,2025-03-23,Voluntary,Terminated,2818,92.6,True
+SYN-S-0053,POS-187,SITE-08,Clinician,Clinical,2017-09-10,,,Active,3035,99.7,True
+SYN-S-0054,POS-046,SITE-03,Caseworker,Case Management,2017-10-21,2025-03-28,Involuntary,Terminated,2715,89.2,True
+SYN-S-0055,POS-181,SITE-07,Residential Counselor,Direct Care,2017-10-24,2023-08-29,Voluntary,Terminated,2135,70.1,True
+SYN-S-0056,POS-069,SITE-03,Clinical Supervisor,Clinical,2017-11-07,,,Active,2977,97.8,True
+SYN-S-0057,POS-132,SITE-06,Caseworker,Case Management,2018-01-15,,,Active,2908,95.5,True
+SYN-S-0058,POS-045,SITE-02,Administrative Assistant,Admin,2018-01-17,,,Active,2906,95.5,True
+SYN-S-0059,POS-015,SITE-01,Finance Associate,Admin,2018-05-27,,,Active,2776,91.2,True
+SYN-S-0060,POS-136,SITE-06,Caseworker,Case Management,2018-05-30,,,Active,2773,91.1,True
+SYN-S-0061,POS-009,SITE-01,Finance Associate,Admin,2018-06-23,,,Active,2749,90.3,True
+SYN-S-0062,POS-057,SITE-03,Caseworker,Case Management,2018-07-17,2024-02-15,Voluntary,Terminated,2039,67.0,True
+SYN-S-0063,POS-193,SITE-08,Clinician,Clinical,2018-08-28,2023-10-09,Involuntary,Terminated,1868,61.4,True
+SYN-S-0064,POS-149,SITE-06,Clinician,Clinical,2018-09-25,2025-09-29,Voluntary,Terminated,2561,84.1,True
+SYN-S-0065,POS-075,SITE-04,Caseworker,Case Management,2018-10-18,,,Active,2632,86.5,True
+SYN-S-0066,POS-174,SITE-07,Youth Care Worker,Direct Care,2018-11-17,2023-08-25,Voluntary,Terminated,1742,57.2,True
+SYN-S-0067,POS-029,SITE-02,Caseworker,Case Management,2018-12-20,,,Active,2569,84.4,True
+SYN-S-0068,POS-064,SITE-03,Case Supervisor,Case Management,2019-01-04,,,Active,2554,83.9,True
+SYN-S-0069,POS-140,SITE-06,Caseworker,Case Management,2019-03-06,,,Active,2493,81.9,True
+SYN-S-0070,POS-002,SITE-01,Administrative Assistant,Admin,2019-04-05,,,Active,2463,80.9,True
+SYN-S-0071,POS-094,SITE-04,Clinician,Clinical,2019-04-10,,,Active,2458,80.8,True
+SYN-S-0072,POS-054,SITE-03,Caseworker,Case Management,2019-05-03,,,Active,2435,80.0,True
+SYN-S-0073,POS-153,SITE-06,Administrative Assistant,Admin,2019-05-10,,,Active,2428,79.8,True
+SYN-S-0074,POS-188,SITE-08,Clinician,Clinical,2019-05-13,2024-12-17,Voluntary,Terminated,2045,67.2,True
+SYN-S-0075,POS-121,SITE-05,Residential Counselor,Direct Care,2019-05-14,2024-11-23,Involuntary,Terminated,2020,66.4,True
+SYN-S-0076,POS-166,SITE-07,Youth Care Worker,Direct Care,2019-05-19,2024-08-14,Involuntary,Terminated,1914,62.9,True
+SYN-S-0077,POS-190,SITE-08,Clinician,Clinical,2019-06-13,,,Active,2394,78.7,True
+SYN-S-0078,POS-098,SITE-05,Youth Care Worker,Direct Care,2019-07-13,2023-11-26,Involuntary,Terminated,1597,52.5,True
+SYN-S-0079,POS-130,SITE-06,Caseworker,Case Management,2019-09-10,,,Active,2305,75.7,True
+SYN-S-0080,POS-104,SITE-05,Youth Care Worker,Direct Care,2019-09-23,,,Active,2292,75.3,True
+SYN-S-0081,POS-058,SITE-03,Caseworker,Case Management,2019-11-12,2024-09-08,Voluntary,Terminated,1762,57.9,True
+SYN-S-0082,POS-118,SITE-05,Residential Counselor,Direct Care,2019-11-14,,,Active,2240,73.6,True
+SYN-S-0083,POS-108,SITE-05,Youth Care Worker,Direct Care,2019-12-05,2023-04-05,Involuntary,Terminated,1217,40.0,True
+SYN-S-0084,POS-021,SITE-02,Caseworker,Case Management,2020-01-19,,,Active,2174,71.4,True
+SYN-S-0085,POS-155,SITE-07,Youth Care Worker,Direct Care,2020-02-08,2023-05-05,Voluntary,Terminated,1182,38.8,True
+SYN-S-0086,POS-048,SITE-03,Caseworker,Case Management,2020-02-09,,,Active,2153,70.7,True
+SYN-S-0087,POS-167,SITE-07,Youth Care Worker,Direct Care,2020-03-07,,,Active,2126,69.8,True
+SYN-S-0088,POS-109,SITE-05,Youth Care Worker,Direct Care,2020-03-23,2023-07-14,Voluntary,Terminated,1208,39.7,True
+SYN-S-0089,POS-096,SITE-04,Administrative Assistant,Admin,2020-03-24,,,Active,2109,69.3,True
+SYN-S-0090,POS-156,SITE-07,Youth Care Worker,Direct Care,2020-05-28,,,Active,2044,67.2,True
+SYN-S-0091,POS-056,SITE-03,Caseworker,Case Management,2020-05-30,,,Active,2042,67.1,True
+SYN-S-0092,POS-087,SITE-04,Caseworker,Case Management,2020-06-12,,,Active,2029,66.7,True
+SYN-S-0093,POS-128,SITE-05,Administrative Assistant,Admin,2020-06-16,,,Active,2025,66.5,True
+SYN-S-0094,POS-120,SITE-05,Residential Counselor,Direct Care,2020-07-05,,,Active,2006,65.9,True
+SYN-S-0095,POS-139,SITE-06,Caseworker,Case Management,2020-07-09,2023-04-12,Voluntary,Terminated,1007,33.1,True
+SYN-S-0096,POS-004,SITE-01,Administrative Assistant,Admin,2020-07-24,2025-12-05,Voluntary,Terminated,1960,64.4,True
+SYN-S-0097,POS-086,SITE-04,Caseworker,Case Management,2020-08-06,,,Active,1974,64.9,True
+SYN-S-0098,POS-172,SITE-07,Youth Care Worker,Direct Care,2020-08-15,,,Active,1965,64.6,True
+SYN-S-0099,POS-044,SITE-02,Administrative Assistant,Admin,2020-08-23,,,Active,1957,64.3,True
+SYN-S-0100,POS-023,SITE-02,Caseworker,Case Management,2020-09-07,,,Active,1942,63.8,True
+SYN-S-0101,POS-199,SITE-08,Administrative Assistant,Admin,2020-09-08,,,Active,1941,63.8,True
+SYN-S-0102,POS-074,SITE-04,Caseworker,Case Management,2020-09-15,,,Active,1934,63.5,True
+SYN-S-0103,POS-105,SITE-05,Youth Care Worker,Direct Care,2020-09-27,,,Active,1922,63.1,True
+SYN-S-0104,POS-083,SITE-04,Caseworker,Case Management,2020-09-30,2025-03-27,Voluntary,Terminated,1639,53.8,True
+SYN-S-0105,POS-041,SITE-02,Clinician,Clinical,2020-10-11,,,Active,1908,62.7,True
+SYN-S-0106,POS-198,SITE-08,Administrative Assistant,Admin,2020-11-07,2023-07-13,Voluntary,Terminated,978,32.1,True
+SYN-S-0107,POS-080,SITE-04,Caseworker,Case Management,2020-11-12,2025-07-12,Voluntary,Terminated,1703,56.0,True
+SYN-S-0108,POS-089,SITE-04,Case Supervisor,Case Management,2020-11-16,2024-01-16,Involuntary,Terminated,1156,38.0,True
+SYN-S-0109,POS-178,SITE-07,Residential Counselor,Direct Care,2020-11-24,2025-12-24,Voluntary,Terminated,1856,61.0,True
+SYN-S-0110,POS-012,SITE-01,Finance Associate,Admin,2020-11-27,,,Active,1861,61.1,True
+SYN-S-0111,POS-143,SITE-06,Caseworker,Case Management,2020-12-26,2025-05-02,Involuntary,Terminated,1588,52.2,True
+SYN-S-0112,POS-049,SITE-03,Caseworker,Case Management,2021-01-04,2023-05-13,Voluntary,Terminated,859,28.2,True
+SYN-S-0113,POS-124,SITE-05,Residential Counselor,Direct Care,2021-01-10,,,Active,1817,59.7,True
+SYN-S-0114,POS-085,SITE-04,Caseworker,Case Management,2021-01-29,2024-02-23,Voluntary,Terminated,1120,36.8,True
+SYN-S-0115,POS-043,SITE-02,Clinical Supervisor,Clinical,2021-02-19,2023-11-06,Voluntary,Terminated,990,32.5,True
+SYN-S-0116,POS-099,SITE-05,Youth Care Worker,Direct Care,2021-03-21,,,Active,1747,57.4,True
+SYN-S-0117,POS-076,SITE-04,Caseworker,Case Management,2021-03-27,2024-08-01,Voluntary,Terminated,1223,40.2,True
+SYN-S-0118,POS-177,SITE-07,Residential Counselor,Direct Care,2021-03-28,,,Active,1740,57.2,True
+SYN-S-0119,POS-185,SITE-07,Administrative Assistant,Admin,2021-03-30,,,Active,1738,57.1,True
+SYN-S-0120,POS-184,SITE-07,Clinician,Clinical,2021-04-14,,,Active,1723,56.6,True
+SYN-S-0121,POS-116,SITE-05,Youth Care Worker,Direct Care,2021-04-21,,,Active,1716,56.4,True
+SYN-S-0122,POS-117,SITE-05,Youth Care Worker,Direct Care,2021-04-21,2023-11-16,Voluntary,Terminated,939,30.9,True
+SYN-S-0123,POS-196,SITE-08,Clinical Supervisor,Clinical,2021-05-14,,,Active,1693,55.6,True
+SYN-S-0124,POS-024,SITE-02,Caseworker,Case Management,2021-05-24,2025-07-05,Voluntary,Terminated,1503,49.4,True
+SYN-S-0125,POS-158,SITE-07,Youth Care Worker,Direct Care,2021-05-27,2023-10-30,Voluntary,Terminated,886,29.1,True
+SYN-S-0126,POS-100,SITE-05,Youth Care Worker,Direct Care,2021-06-13,2023-01-08,Voluntary,Terminated,574,18.9,True
+SYN-S-0127,POS-034,SITE-02,Caseworker,Case Management,2021-07-02,,,Active,1644,54.0,True
+SYN-S-0128,POS-144,SITE-06,Caseworker,Case Management,2021-07-07,,,Active,1639,53.8,True
+SYN-S-0129,POS-088,SITE-04,Case Supervisor,Case Management,2021-07-16,2024-05-12,Voluntary,Terminated,1031,33.9,True
+SYN-S-0130,POS-133,SITE-06,Caseworker,Case Management,2021-07-18,2024-06-29,Voluntary,Terminated,1077,35.4,True
+SYN-S-0131,POS-019,SITE-01,Clinical Supervisor,Clinical,2021-07-19,2025-11-08,Voluntary,Terminated,1573,51.7,True
+SYN-S-0132,POS-134,SITE-06,Caseworker,Case Management,2021-07-26,,,Active,1620,53.2,True
+SYN-S-0133,POS-066,SITE-03,Clinician,Clinical,2021-09-12,2025-02-25,Voluntary,Terminated,1262,41.5,True
+SYN-S-0134,POS-189,SITE-08,Clinician,Clinical,2021-10-15,,,Active,1539,50.6,True
+SYN-S-0135,POS-107,SITE-05,Youth Care Worker,Direct Care,2021-10-20,2024-05-15,Voluntary,Terminated,938,30.8,True
+SYN-S-0136,POS-191,SITE-08,Clinician,Clinical,2021-11-02,2025-08-25,Voluntary,Terminated,1392,45.7,True
+SYN-S-0137,POS-025,SITE-02,Caseworker,Case Management,2021-11-03,2023-08-09,Voluntary,Terminated,644,21.2,True
+SYN-S-0138,POS-110,SITE-05,Youth Care Worker,Direct Care,2021-11-09,2024-08-18,Voluntary,Terminated,1013,33.3,True
+SYN-S-0139,POS-148,SITE-06,Clinician,Clinical,2021-11-15,,,Active,1508,49.5,True
+SYN-S-0140,POS-032,SITE-02,Caseworker,Case Management,2021-11-26,2024-04-11,Voluntary,Terminated,867,28.5,True
+SYN-S-0141,POS-005,SITE-01,Administrative Assistant,Admin,2021-12-03,2023-06-12,Voluntary,Terminated,556,18.3,True
+SYN-S-0142,POS-027,SITE-02,Caseworker,Case Management,2021-12-17,,,Active,1476,48.5,True
+SYN-S-0143,POS-141,SITE-06,Caseworker,Case Management,2021-12-20,2023-07-10,Voluntary,Terminated,567,18.6,True
+SYN-S-0144,POS-195,SITE-08,Clinician,Clinical,2022-01-05,2025-01-22,Voluntary,Terminated,1113,36.6,True
+SYN-S-0145,POS-017,SITE-01,Finance Associate,Admin,2022-01-17,,,Active,1445,47.5,True
+SYN-S-0146,POS-147,SITE-06,Case Supervisor,Case Management,2022-01-22,,,Active,1440,47.3,True
+SYN-S-0147,POS-168,SITE-07,Youth Care Worker,Direct Care,2022-01-28,,,Active,1434,47.1,True
+SYN-S-0148,POS-090,SITE-04,Case Supervisor,Case Management,2022-02-11,,,Active,1420,46.7,True
+SYN-S-0149,POS-072,SITE-04,Caseworker,Case Management,2022-02-12,2023-03-06,Voluntary,Terminated,387,12.7,True
+SYN-S-0150,POS-160,SITE-07,Youth Care Worker,Direct Care,2022-02-12,2024-05-04,Voluntary,Terminated,812,26.7,True
+SYN-S-0151,POS-114,SITE-05,Youth Care Worker,Direct Care,2022-03-08,2023-09-27,Voluntary,Terminated,568,18.7,True
+SYN-S-0152,POS-192,SITE-08,Clinician,Clinical,2022-03-21,2023-02-24,Involuntary,Terminated,340,11.2,True
+SYN-S-0153,POS-113,SITE-05,Youth Care Worker,Direct Care,2022-03-23,2023-06-08,Voluntary,Terminated,442,14.5,True
+SYN-S-0154,POS-161,SITE-07,Youth Care Worker,Direct Care,2022-03-29,2024-01-24,Involuntary,Terminated,666,21.9,True
+SYN-S-0155,POS-053,SITE-03,Caseworker,Case Management,2022-04-02,2024-05-19,Voluntary,Terminated,778,25.6,True
+SYN-S-0156,POS-171,SITE-07,Youth Care Worker,Direct Care,2022-04-02,2024-02-12,Voluntary,Terminated,681,22.4,True
+SYN-S-0157,POS-047,SITE-03,Caseworker,Case Management,2022-04-30,,,Active,1342,44.1,True
+SYN-S-0158,POS-084,SITE-04,Caseworker,Case Management,2022-05-06,2023-08-05,Voluntary,Terminated,456,15.0,True
+SYN-S-0159,POS-142,SITE-06,Caseworker,Case Management,2022-05-16,2025-02-03,Voluntary,Terminated,994,32.7,True
+SYN-S-0160,POS-028,SITE-02,Caseworker,Case Management,2022-06-03,,,Active,1308,43.0,True
+SYN-S-0161,POS-033,SITE-02,Caseworker,Case Management,2022-06-04,,,Active,1307,42.9,True
+SYN-S-0162,POS-123,SITE-05,Residential Counselor,Direct Care,2022-06-17,2024-07-01,Voluntary,Terminated,745,24.5,True
+SYN-S-0163,POS-101,SITE-05,Youth Care Worker,Direct Care,2022-06-22,2024-02-25,Involuntary,Terminated,613,20.1,True
+SYN-S-0164,POS-039,SITE-02,Clinician,Clinical,2022-07-05,,,Active,1276,41.9,True
+SYN-S-0165,POS-042,SITE-02,Clinician,Clinical,2022-07-25,2025-02-20,Voluntary,Terminated,941,30.9,True
+SYN-S-0166,POS-055,SITE-03,Caseworker,Case Management,2022-07-27,2025-11-08,Voluntary,Terminated,1200,39.4,True
+SYN-S-0167,POS-125,SITE-05,Residential Counselor,Direct Care,2022-07-28,2025-02-27,Voluntary,Terminated,945,31.0,True
+SYN-S-0168,POS-022,SITE-02,Caseworker,Case Management,2022-07-30,2023-10-21,Voluntary,Terminated,448,14.7,True
+SYN-S-0169,POS-157,SITE-07,Youth Care Worker,Direct Care,2022-08-03,2023-12-17,Involuntary,Terminated,501,16.5,True
+SYN-S-0170,POS-169,SITE-07,Youth Care Worker,Direct Care,2022-08-06,2023-11-13,Voluntary,Terminated,464,15.2,True
+SYN-S-0171,POS-059,SITE-03,Caseworker,Case Management,2022-08-11,2024-07-28,Voluntary,Terminated,717,23.6,True
+SYN-S-0172,POS-102,SITE-05,Youth Care Worker,Direct Care,2022-08-22,2023-11-06,Voluntary,Terminated,441,14.5,True
+SYN-S-0173,POS-026,SITE-02,Caseworker,Case Management,2022-08-24,2023-05-13,Voluntary,Terminated,262,8.6,True
+SYN-S-0174,POS-186,SITE-08,Clinician,Clinical,2022-08-29,2023-03-03,Voluntary,Terminated,186,6.1,True
+SYN-S-0175,POS-182,SITE-07,Residential Counselor,Direct Care,2022-08-30,2024-09-07,Involuntary,Terminated,739,24.3,True
+SYN-S-0176,POS-159,SITE-07,Youth Care Worker,Direct Care,2022-08-31,2023-03-19,Voluntary,Terminated,200,6.6,True
+SYN-S-0177,POS-073,SITE-04,Caseworker,Case Management,2022-09-08,2024-07-29,Voluntary,Terminated,690,22.7,True
+SYN-S-0178,POS-122,SITE-05,Residential Counselor,Direct Care,2022-09-09,,,Active,1210,39.8,True
+SYN-S-0179,POS-111,SITE-05,Youth Care Worker,Direct Care,2022-09-18,2025-04-01,Voluntary,Terminated,926,30.4,True
+SYN-S-0180,POS-179,SITE-07,Residential Counselor,Direct Care,2022-09-29,,,Active,1190,39.1,True
+SYN-S-0181,POS-016,SITE-01,Finance Associate,Admin,2022-10-12,,,Active,1177,38.7,True
+SYN-S-0182,POS-180,SITE-07,Residential Counselor,Direct Care,2022-10-20,,,Active,1169,38.4,True
+SYN-S-0183,POS-106,SITE-05,Youth Care Worker,Direct Care,2022-10-24,,,Active,1165,38.3,True
+SYN-S-0184,POS-035,SITE-02,Caseworker,Case Management,2022-10-27,2024-03-14,Voluntary,Terminated,504,16.6,True
+SYN-S-0185,POS-163,SITE-07,Youth Care Worker,Direct Care,2022-11-04,,,Active,1154,37.9,True
+SYN-S-0186,POS-078,SITE-04,Caseworker,Case Management,2022-11-13,2025-02-26,Involuntary,Terminated,836,27.5,True
+SYN-S-0187,POS-175,SITE-07,Residential Counselor,Direct Care,2022-11-21,,,Active,1137,37.4,True
+SYN-S-0188,POS-165,SITE-07,Youth Care Worker,Direct Care,2022-12-03,2025-05-01,Voluntary,Terminated,880,28.9,True
+SYN-S-0189,POS-036,SITE-02,Case Supervisor,Case Management,2022-12-06,2025-05-21,Voluntary,Terminated,897,29.5,True
+SYN-S-0190,POS-061,SITE-03,Caseworker,Case Management,2023-01-02,,,Active,1095,36.0,True
+SYN-S-0191,POS-115,SITE-05,Youth Care Worker,Direct Care,2023-01-04,2025-12-29,Voluntary,Terminated,1090,35.8,True
+SYN-S-0192,POS-170,SITE-07,Youth Care Worker,Direct Care,2023-01-04,2023-11-14,Voluntary,Terminated,314,10.3,True
+SYN-S-0193,POS-077,SITE-04,Caseworker,Case Management,2023-01-18,,,Active,1079,35.4,True
+SYN-S-0194,POS-050,SITE-03,Caseworker,Case Management,2023-02-06,2023-05-17,Voluntary,Terminated,100,3.3,True
+SYN-S-0195,POS-138,SITE-06,Caseworker,Case Management,2023-02-09,,,Active,1057,34.7,True
+SYN-S-0196,POS-164,SITE-07,Youth Care Worker,Direct Care,2023-02-15,2024-06-22,Involuntary,Terminated,493,16.2,True
+SYN-S-0197,POS-173,SITE-07,Youth Care Worker,Direct Care,2023-02-18,2023-09-04,Voluntary,Terminated,198,6.5,True
+SYN-S-0198,POS-137,SITE-06,Caseworker,Case Management,2023-02-20,2025-07-09,Voluntary,Terminated,870,28.6,True
+SYN-S-0199,POS-100,SITE-05,Youth Care Worker,Direct Care,2023-02-22,2023-07-16,Voluntary,Terminated,144,4.7,True
+SYN-S-0200,POS-001,SITE-01,Administrative Assistant,Admin,2023-03-20,2023-07-06,Involuntary,Terminated,108,3.5,True
+SYN-S-0201,POS-103,SITE-05,Youth Care Worker,Direct Care,2023-03-31,,,Active,1007,33.1,True
+SYN-S-0202,POS-081,SITE-04,Caseworker,Case Management,2023-04-01,,,Active,1006,33.1,True
+SYN-S-0203,POS-159,SITE-07,Youth Care Worker,Direct Care,2023-04-06,2023-06-28,Voluntary,Terminated,83,2.7,True
+SYN-S-0204,POS-065,SITE-03,Clinician,Clinical,2023-04-08,2024-02-28,Involuntary,Terminated,326,10.7,True
+SYN-S-0205,POS-192,SITE-08,Clinician,Clinical,2023-04-19,,,Active,988,32.5,True
+SYN-S-0206,POS-108,SITE-05,Youth Care Worker,Direct Care,2023-04-21,2024-09-28,Voluntary,Terminated,526,17.3,True
+SYN-S-0207,POS-186,SITE-08,Clinician,Clinical,2023-04-22,,,Active,985,32.4,True
+SYN-S-0208,POS-072,SITE-04,Caseworker,Case Management,2023-04-24,,,Active,983,32.3,True
+SYN-S-0209,POS-097,SITE-04,Administrative Assistant,Admin,2023-04-28,,,Active,979,32.2,True
+SYN-S-0210,POS-135,SITE-06,Caseworker,Case Management,2023-05-14,2023-09-05,Involuntary,Terminated,114,3.7,True
+SYN-S-0211,POS-139,SITE-06,Caseworker,Case Management,2023-05-28,,,Active,949,31.2,True
+SYN-S-0212,POS-026,SITE-02,Caseworker,Case Management,2023-06-05,2025-08-06,Voluntary,Terminated,793,26.1,True
+SYN-S-0213,POS-030,SITE-02,Caseworker,Case Management,2023-06-10,2023-07-08,Involuntary,Terminated,28,0.9,True
+SYN-S-0214,POS-113,SITE-05,Youth Care Worker,Direct Care,2023-06-15,2024-05-16,Voluntary,Terminated,336,11.0,True
+SYN-S-0215,POS-155,SITE-07,Youth Care Worker,Direct Care,2023-06-15,,,Active,931,30.6,True
+SYN-S-0216,POS-183,SITE-07,Clinician,Clinical,2023-06-23,2023-07-12,Voluntary,Terminated,19,0.6,True
+SYN-S-0217,POS-159,SITE-07,Youth Care Worker,Direct Care,2023-07-08,2024-04-02,Involuntary,Terminated,269,8.8,True
+SYN-S-0218,POS-049,SITE-03,Caseworker,Case Management,2023-07-12,2023-11-02,Voluntary,Terminated,113,3.7,True
+SYN-S-0219,POS-005,SITE-01,Administrative Assistant,Admin,2023-07-19,2023-08-07,Involuntary,Terminated,19,0.6,True
+SYN-S-0220,POS-051,SITE-03,Caseworker,Case Management,2023-07-24,,,Active,892,29.3,True
+SYN-S-0221,POS-050,SITE-03,Caseworker,Case Management,2023-07-25,,,Active,891,29.3,True
+SYN-S-0222,POS-109,SITE-05,Youth Care Worker,Direct Care,2023-07-25,2025-04-20,Voluntary,Terminated,635,20.9,True
+SYN-S-0223,POS-001,SITE-01,Administrative Assistant,Admin,2023-08-03,,,Active,882,29.0,True
+SYN-S-0224,POS-100,SITE-05,Youth Care Worker,Direct Care,2023-08-10,2024-02-16,Voluntary,Terminated,190,6.2,True
+SYN-S-0225,POS-141,SITE-06,Caseworker,Case Management,2023-08-11,,,Active,874,28.7,True
+SYN-S-0226,POS-198,SITE-08,Administrative Assistant,Admin,2023-08-16,2023-09-17,Voluntary,Terminated,32,1.1,True
+SYN-S-0227,POS-030,SITE-02,Caseworker,Case Management,2023-09-02,2024-01-26,Involuntary,Terminated,146,4.8,True
+SYN-S-0228,POS-005,SITE-01,Administrative Assistant,Admin,2023-09-12,,,Active,842,27.7,True
+SYN-S-0229,POS-174,SITE-07,Youth Care Worker,Direct Care,2023-09-21,2023-10-28,Voluntary,Terminated,37,1.2,True
+SYN-S-0230,POS-025,SITE-02,Caseworker,Case Management,2023-09-27,2024-09-22,Voluntary,Terminated,361,11.9,True
+SYN-S-0231,POS-084,SITE-04,Caseworker,Case Management,2023-10-04,,,Active,820,26.9,True
+SYN-S-0232,POS-181,SITE-07,Residential Counselor,Direct Care,2023-10-16,,,Active,808,26.5,True
+SYN-S-0233,POS-114,SITE-05,Youth Care Worker,Direct Care,2023-10-18,2023-11-12,Involuntary,Terminated,25,0.8,True
+SYN-S-0234,POS-173,SITE-07,Youth Care Worker,Direct Care,2023-10-20,2024-02-11,Voluntary,Terminated,114,3.7,True
+SYN-S-0235,POS-183,SITE-07,Clinician,Clinical,2023-10-21,,,Active,803,26.4,True
+SYN-S-0236,POS-198,SITE-08,Administrative Assistant,Admin,2023-10-23,2025-11-03,Voluntary,Terminated,742,24.4,True
+SYN-S-0237,POS-193,SITE-08,Clinician,Clinical,2023-11-12,,,Active,781,25.7,True
+SYN-S-0238,POS-169,SITE-07,Youth Care Worker,Direct Care,2023-12-02,2023-12-29,Voluntary,Terminated,27,0.9,True
+SYN-S-0239,POS-174,SITE-07,Youth Care Worker,Direct Care,2023-12-07,2024-05-20,Involuntary,Terminated,165,5.4,True
+SYN-S-0240,POS-117,SITE-05,Youth Care Worker,Direct Care,2023-12-08,2024-01-19,Involuntary,Terminated,42,1.4,True
+SYN-S-0241,POS-063,SITE-03,Case Supervisor,Case Management,2023-12-09,,,Active,754,24.8,True
+SYN-S-0242,POS-102,SITE-05,Youth Care Worker,Direct Care,2023-12-13,,,Active,750,24.6,True
+SYN-S-0243,POS-098,SITE-05,Youth Care Worker,Direct Care,2023-12-21,2024-09-03,Voluntary,Terminated,257,8.4,True
+SYN-S-0244,POS-114,SITE-05,Youth Care Worker,Direct Care,2023-12-23,2023-12-30,Voluntary,Terminated,7,0.2,True
+SYN-S-0245,POS-022,SITE-02,Caseworker,Case Management,2023-12-24,,,Active,739,24.3,True
+SYN-S-0246,POS-170,SITE-07,Youth Care Worker,Direct Care,2023-12-29,2024-03-19,Involuntary,Terminated,81,2.7,True
+SYN-S-0247,POS-158,SITE-07,Youth Care Worker,Direct Care,2024-01-01,2025-07-16,Voluntary,Terminated,562,18.5,True
+SYN-S-0248,POS-049,SITE-03,Caseworker,Case Management,2024-01-14,,,Active,718,23.6,True
+SYN-S-0249,POS-157,SITE-07,Youth Care Worker,Direct Care,2024-01-19,2025-02-13,Voluntary,Terminated,391,12.8,True
+SYN-S-0250,POS-114,SITE-05,Youth Care Worker,Direct Care,2024-01-31,2024-03-03,Involuntary,Terminated,32,1.1,True
+SYN-S-0251,POS-169,SITE-07,Youth Care Worker,Direct Care,2024-02-08,2024-02-22,Voluntary,Terminated,14,0.5,True
+SYN-S-0252,POS-117,SITE-05,Youth Care Worker,Direct Care,2024-02-12,,,Active,689,22.6,True
+SYN-S-0253,POS-161,SITE-07,Youth Care Worker,Direct Care,2024-02-28,2024-09-01,Voluntary,Terminated,186,6.1,True
+SYN-S-0254,POS-135,SITE-06,Caseworker,Case Management,2024-03-01,2024-03-19,Voluntary,Terminated,18,0.6,True
+SYN-S-0255,POS-100,SITE-05,Youth Care Worker,Direct Care,2024-03-04,2024-11-20,Voluntary,Terminated,261,8.6,True
+SYN-S-0256,POS-043,SITE-02,Clinical Supervisor,Clinical,2024-03-11,,,Active,661,21.7,True
+SYN-S-0257,POS-169,SITE-07,Youth Care Worker,Direct Care,2024-03-12,2024-05-12,Voluntary,Terminated,61,2.0,True
+SYN-S-0258,POS-030,SITE-02,Caseworker,Case Management,2024-03-16,2024-12-08,Involuntary,Terminated,267,8.8,True
+SYN-S-0259,POS-171,SITE-07,Youth Care Worker,Direct Care,2024-03-16,,,Active,656,21.6,True
+SYN-S-0260,POS-173,SITE-07,Youth Care Worker,Direct Care,2024-03-23,,,Active,649,21.3,True
+SYN-S-0261,POS-114,SITE-05,Youth Care Worker,Direct Care,2024-04-02,2025-03-17,Involuntary,Terminated,349,11.5,True
+SYN-S-0262,POS-085,SITE-04,Caseworker,Case Management,2024-04-06,,,Active,635,20.9,True
+SYN-S-0263,POS-057,SITE-03,Caseworker,Case Management,2024-04-14,2024-10-20,Voluntary,Terminated,189,6.2,True
+SYN-S-0264,POS-101,SITE-05,Youth Care Worker,Direct Care,2024-04-19,,,Active,622,20.4,True
+SYN-S-0265,POS-159,SITE-07,Youth Care Worker,Direct Care,2024-04-22,2025-08-19,Voluntary,Terminated,484,15.9,True
+SYN-S-0266,POS-089,SITE-04,Case Supervisor,Case Management,2024-05-11,,,Active,600,19.7,True
+SYN-S-0267,POS-162,SITE-07,Youth Care Worker,Direct Care,2024-05-12,2025-10-04,Voluntary,Terminated,510,16.8,True
+SYN-S-0268,POS-170,SITE-07,Youth Care Worker,Direct Care,2024-05-12,2024-06-23,Voluntary,Terminated,42,1.4,True
+SYN-S-0269,POS-035,SITE-02,Caseworker,Case Management,2024-05-13,,,Active,598,19.6,True
+SYN-S-0270,POS-032,SITE-02,Caseworker,Case Management,2024-05-22,2024-08-28,Involuntary,Terminated,98,3.2,True
+SYN-S-0271,POS-093,SITE-04,Clinician,Clinical,2024-05-27,,,Active,584,19.2,True
+SYN-S-0272,POS-160,SITE-07,Youth Care Worker,Direct Care,2024-05-28,,,Active,583,19.2,True
+SYN-S-0273,POS-169,SITE-07,Youth Care Worker,Direct Care,2024-05-28,2024-08-07,Voluntary,Terminated,71,2.3,True
+SYN-S-0274,POS-135,SITE-06,Caseworker,Case Management,2024-05-29,2024-10-15,Voluntary,Terminated,139,4.6,True
+SYN-S-0275,POS-113,SITE-05,Youth Care Worker,Direct Care,2024-06-11,,,Active,569,18.7,True
+SYN-S-0276,POS-065,SITE-03,Clinician,Clinical,2024-06-24,,,Active,556,18.3,True
+SYN-S-0277,POS-174,SITE-07,Youth Care Worker,Direct Care,2024-06-27,,,Active,553,18.2,True
+SYN-S-0278,POS-164,SITE-07,Youth Care Worker,Direct Care,2024-07-06,,,Active,544,17.9,True
+SYN-S-0279,POS-107,SITE-05,Youth Care Worker,Direct Care,2024-07-08,2025-05-20,Voluntary,Terminated,316,10.4,True
+SYN-S-0280,POS-020,SITE-02,Caseworker,Case Management,2024-07-18,2025-02-20,Voluntary,Terminated,217,7.1,True
+SYN-S-0281,POS-053,SITE-03,Caseworker,Case Management,2024-07-25,2025-02-11,Voluntary,Terminated,201,6.6,True
+SYN-S-0282,POS-170,SITE-07,Youth Care Worker,Direct Care,2024-07-28,2025-09-16,Involuntary,Terminated,415,13.6,True
+SYN-S-0283,POS-088,SITE-04,Case Supervisor,Case Management,2024-07-29,2025-02-18,Involuntary,Terminated,204,6.7,True
+SYN-S-0284,POS-133,SITE-06,Caseworker,Case Management,2024-07-30,2025-06-13,Voluntary,Terminated,318,10.4,True
+SYN-S-0285,POS-038,SITE-02,Case Supervisor,Case Management,2024-08-08,2025-09-17,Voluntary,Terminated,405,13.3,True
+SYN-S-0286,POS-003,SITE-01,Administrative Assistant,Admin,2024-08-15,,,Active,504,16.6,True
+SYN-S-0287,POS-076,SITE-04,Caseworker,Case Management,2024-08-16,2024-11-27,Voluntary,Terminated,103,3.4,True
+SYN-S-0288,POS-059,SITE-03,Caseworker,Case Management,2024-08-26,,,Active,493,16.2,True
+SYN-S-0289,POS-110,SITE-05,Youth Care Worker,Direct Care,2024-09-02,,,Active,486,16.0,True
+SYN-S-0290,POS-169,SITE-07,Youth Care Worker,Direct Care,2024-09-08,,,Active,480,15.8,True
+SYN-S-0291,POS-073,SITE-04,Caseworker,Case Management,2024-09-14,2025-07-31,Voluntary,Terminated,320,10.5,True
+SYN-S-0292,POS-123,SITE-05,Residential Counselor,Direct Care,2024-09-17,2024-11-25,Voluntary,Terminated,69,2.3,True
+SYN-S-0293,POS-166,SITE-07,Youth Care Worker,Direct Care,2024-09-17,,,Active,471,15.5,True
+SYN-S-0294,POS-032,SITE-02,Caseworker,Case Management,2024-09-21,2024-10-31,Voluntary,Terminated,40,1.3,True
+SYN-S-0295,POS-098,SITE-05,Youth Care Worker,Direct Care,2024-10-01,,,Active,457,15.0,True
+SYN-S-0296,POS-079,SITE-04,Caseworker,Case Management,2024-10-04,,,Active,454,14.9,True
+SYN-S-0297,POS-161,SITE-07,Youth Care Worker,Direct Care,2024-10-15,,,Active,443,14.6,True
+SYN-S-0298,POS-058,SITE-03,Caseworker,Case Management,2024-11-05,,,Active,422,13.9,True
+SYN-S-0299,POS-025,SITE-02,Caseworker,Case Management,2024-11-07,2025-01-04,Voluntary,Terminated,58,1.9,True
+SYN-S-0300,POS-182,SITE-07,Residential Counselor,Direct Care,2024-11-07,2025-02-08,Voluntary,Terminated,93,3.1,True
+SYN-S-0301,POS-135,SITE-06,Caseworker,Case Management,2024-11-24,,,Active,403,13.2,True
+SYN-S-0302,POS-057,SITE-03,Caseworker,Case Management,2024-11-29,2025-11-24,Voluntary,Terminated,360,11.8,True
+SYN-S-0303,POS-108,SITE-05,Youth Care Worker,Direct Care,2024-12-01,2024-12-08,Voluntary,Terminated,7,0.2,True
+SYN-S-0304,POS-100,SITE-05,Youth Care Worker,Direct Care,2024-12-07,2025-08-02,Voluntary,Terminated,238,7.8,True
+SYN-S-0305,POS-108,SITE-05,Youth Care Worker,Direct Care,2024-12-17,,,Active,380,12.5,True
+SYN-S-0306,POS-121,SITE-05,Residential Counselor,Direct Care,2024-12-29,2025-02-07,Voluntary,Terminated,40,1.3,True
+SYN-S-0307,POS-123,SITE-05,Residential Counselor,Direct Care,2024-12-30,,,Active,367,12.1,True
+SYN-S-0308,POS-032,SITE-02,Caseworker,Case Management,2025-01-01,,,Active,365,12.0,True
+SYN-S-0309,POS-197,SITE-08,Clinical Supervisor,Clinical,2025-01-03,,,Active,363,11.9,True
+SYN-S-0310,POS-076,SITE-04,Caseworker,Case Management,2025-01-15,2025-04-29,Voluntary,Terminated,104,3.4,True
+SYN-S-0311,POS-030,SITE-02,Caseworker,Case Management,2025-02-15,,,Active,320,10.5,True
+SYN-S-0312,POS-031,SITE-02,Caseworker,Case Management,2025-03-03,2025-03-10,Voluntary,Terminated,7,0.2,True
+SYN-S-0313,POS-025,SITE-02,Caseworker,Case Management,2025-03-04,2025-03-18,Voluntary,Terminated,14,0.5,True
+SYN-S-0314,POS-182,SITE-07,Residential Counselor,Direct Care,2025-03-17,2025-07-01,Voluntary,Terminated,106,3.5,True
+SYN-S-0315,POS-157,SITE-07,Youth Care Worker,Direct Care,2025-03-20,,,Active,287,9.4,True
+SYN-S-0316,POS-142,SITE-06,Caseworker,Case Management,2025-03-23,,,Active,284,9.3,True
+SYN-S-0317,POS-031,SITE-02,Caseworker,Case Management,2025-03-28,,,Active,279,9.2,True
+SYN-S-0318,POS-042,SITE-02,Clinician,Clinical,2025-03-28,2025-04-13,Voluntary,Terminated,16,0.5,True
+SYN-S-0319,POS-188,SITE-08,Clinician,Clinical,2025-04-03,,,Active,273,9.0,True
+SYN-S-0320,POS-125,SITE-05,Residential Counselor,Direct Care,2025-04-04,,,Active,272,8.9,True
+SYN-S-0321,POS-053,SITE-03,Caseworker,Case Management,2025-04-10,2025-10-05,Voluntary,Terminated,178,5.8,True
+SYN-S-0322,POS-114,SITE-05,Youth Care Worker,Direct Care,2025-04-11,2025-08-25,Voluntary,Terminated,136,4.5,True
+SYN-S-0323,POS-066,SITE-03,Clinician,Clinical,2025-04-19,2025-08-24,Voluntary,Terminated,127,4.2,True
+SYN-S-0324,POS-078,SITE-04,Caseworker,Case Management,2025-04-27,,,Active,249,8.2,True
+SYN-S-0325,POS-195,SITE-08,Clinician,Clinical,2025-04-28,,,Active,248,8.1,True
+SYN-S-0326,POS-025,SITE-02,Caseworker,Case Management,2025-05-12,2025-06-11,Involuntary,Terminated,30,1.0,True
+SYN-S-0327,POS-088,SITE-04,Case Supervisor,Case Management,2025-05-12,,,Active,234,7.7,True
+SYN-S-0328,POS-121,SITE-05,Residential Counselor,Direct Care,2025-05-14,2025-09-15,Voluntary,Terminated,124,4.1,True
+SYN-S-0329,POS-111,SITE-05,Youth Care Worker,Direct Care,2025-05-15,,,Active,231,7.6,True
+SYN-S-0330,POS-165,SITE-07,Youth Care Worker,Direct Care,2025-05-18,,,Active,228,7.5,True
+SYN-S-0331,POS-046,SITE-03,Caseworker,Case Management,2025-05-28,,,Active,218,7.2,True
+SYN-S-0332,POS-083,SITE-04,Caseworker,Case Management,2025-05-30,,,Active,216,7.1,True
+SYN-S-0333,POS-042,SITE-02,Clinician,Clinical,2025-05-31,,,Active,215,7.1,True
+SYN-S-0334,POS-109,SITE-05,Youth Care Worker,Direct Care,2025-06-02,,,Active,213,7.0,True
+SYN-S-0335,POS-152,SITE-06,Clinical Supervisor,Clinical,2025-06-03,,,Active,212,7.0,True
+SYN-S-0336,POS-126,SITE-05,Clinician,Clinical,2025-06-06,2025-11-07,Voluntary,Terminated,154,5.1,True
+SYN-S-0337,POS-071,SITE-03,Administrative Assistant,Admin,2025-06-08,,,Active,207,6.8,True
+SYN-S-0338,POS-076,SITE-04,Caseworker,Case Management,2025-06-08,,,Active,207,6.8,True
+SYN-S-0339,POS-036,SITE-02,Case Supervisor,Case Management,2025-06-13,,,Active,202,6.6,True
+SYN-S-0340,POS-020,SITE-02,Caseworker,Case Management,2025-06-17,2025-08-14,Voluntary,Terminated,58,1.9,True
+SYN-S-0341,POS-143,SITE-06,Caseworker,Case Management,2025-07-09,,,Active,176,5.8,True
+SYN-S-0342,POS-182,SITE-07,Residential Counselor,Direct Care,2025-07-23,,,Active,162,5.3,True
+SYN-S-0343,POS-133,SITE-06,Caseworker,Case Management,2025-07-27,,,Active,158,5.2,True
+SYN-S-0344,POS-024,SITE-02,Caseworker,Case Management,2025-08-01,,,Active,153,5.0,True
+SYN-S-0345,POS-025,SITE-02,Caseworker,Case Management,2025-08-05,,,Active,149,4.9,True
+SYN-S-0346,POS-158,SITE-07,Youth Care Worker,Direct Care,2025-08-05,,,Active,149,4.9,True
+SYN-S-0347,POS-080,SITE-04,Caseworker,Case Management,2025-08-16,,,Active,138,4.5,True
+SYN-S-0348,POS-100,SITE-05,Youth Care Worker,Direct Care,2025-08-16,2025-09-02,Involuntary,Terminated,17,0.6,True
+SYN-S-0349,POS-107,SITE-05,Youth Care Worker,Direct Care,2025-08-24,,,Active,130,4.3,True
+SYN-S-0350,POS-137,SITE-06,Caseworker,Case Management,2025-09-01,,,Active,122,4.0,True
+SYN-S-0351,POS-020,SITE-02,Caseworker,Case Management,2025-09-21,,,Active,102,3.4,True
+SYN-S-0352,POS-026,SITE-02,Caseworker,Case Management,2025-09-22,,,Active,101,3.3,True
+SYN-S-0353,POS-114,SITE-05,Youth Care Worker,Direct Care,2025-09-29,,,Active,94,3.1,True
+SYN-S-0354,POS-008,SITE-01,Administrative Assistant,Admin,2025-10-03,,,Active,90,3.0,True
+SYN-S-0355,POS-159,SITE-07,Youth Care Worker,Direct Care,2025-10-06,,,Active,87,2.9,True
+SYN-S-0356,POS-170,SITE-07,Youth Care Worker,Direct Care,2025-10-06,,,Active,87,2.9,True
+SYN-S-0357,POS-121,SITE-05,Residential Counselor,Direct Care,2025-10-07,,,Active,86,2.8,True
+SYN-S-0358,POS-100,SITE-05,Youth Care Worker,Direct Care,2025-10-09,,,Active,84,2.8,True
+SYN-S-0359,POS-191,SITE-08,Clinician,Clinical,2025-10-17,,,Active,76,2.5,True
+SYN-S-0360,POS-038,SITE-02,Case Supervisor,Case Management,2025-11-06,,,Active,56,1.8,True
+SYN-S-0361,POS-162,SITE-07,Youth Care Worker,Direct Care,2025-11-07,,,Active,55,1.8,True
+SYN-S-0362,POS-073,SITE-04,Caseworker,Case Management,2025-11-08,,,Active,54,1.8,True
+SYN-S-0363,POS-053,SITE-03,Caseworker,Case Management,2025-11-11,,,Active,51,1.7,True
+SYN-S-0364,POS-062,SITE-03,Case Supervisor,Case Management,2025-11-30,,,Active,32,1.1,True
+SYN-S-0365,POS-198,SITE-08,Administrative Assistant,Admin,2025-12-06,,,Active,26,0.9,True
+SYN-S-0366,POS-068,SITE-03,Clinician,Clinical,2025-12-21,,,Active,11,0.4,True
+SYN-S-0367,POS-127,SITE-05,Clinician,Clinical,2025-12-28,,,Active,4,0.1,True

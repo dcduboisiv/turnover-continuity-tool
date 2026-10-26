@@ -1,0 +1,9 @@
+role,program_area,annual_salary,fringe_rate,recruiting_cost,training_cost,days_to_fill,coverage_premium
+Youth Care Worker,Direct Care,44000,0.30,1500,3500,35,0.50
+Residential Counselor,Direct Care,48000,0.30,1800,3500,40,0.50
+Caseworker,Case Management,58000,0.30,4000,14000,55,0.50
+Case Supervisor,Case Management,75000,0.30,6000,5000,70,0.50
+Clinician,Clinical,72000,0.30,6500,4000,85,0.60
+Clinical Supervisor,Clinical,90000,0.30,9000,4000,100,0.60
+Administrative Assistant,Admin,48000,0.30,1500,1000,30,0.25
+Finance Associate,Admin,60000,0.30,2500,1500,45,0.25

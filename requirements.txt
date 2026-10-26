@@ -1,0 +1,7 @@
+# Tested on Python 3.9 with pandas 2.3 and numpy 2.0.
+# Upper bounds stop the next untested major version from sneaking in.
+pandas>=2.0,<4
+numpy>=1.24,<3
+
+# Tests
+pytest>=7.0

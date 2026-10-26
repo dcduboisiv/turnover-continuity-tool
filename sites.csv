@@ -1,0 +1,9 @@
+site_id,organization,site_name,site_type,borough,neighborhood,address,latitude,longitude,is_synthetic
+SITE-01,Kinbridge Family Services,Kinbridge Central Office (SYN),Central Office,Manhattan,Central Harlem,"2150 Wexley Avenue, New York, NY 10027",40.809,-73.948,True
+SITE-02,Kinbridge Family Services,Kinbridge East Harlem Family Center (SYN),Family Services,Manhattan,East Harlem,"318 Calloway Street, New York, NY 10029",40.796,-73.939,True
+SITE-03,Kinbridge Family Services,Kinbridge Washington Heights Family Center (SYN),Family Services,Manhattan,Washington Heights,"4420 Brindle Place, New York, NY 10033",40.848,-73.936,True
+SITE-04,Kinbridge Family Services,Kinbridge Bedford-Stuyvesant Family Center (SYN),Family Services,Brooklyn,Bedford-Stuyvesant,"761 Marlowe Avenue, Brooklyn, NY 11216",40.687,-73.942,True
+SITE-05,Kinbridge Family Services,Kinbridge Brownsville Youth Residence (SYN),Youth Residence,Brooklyn,Brownsville,"92 Ashgrove Street, Brooklyn, NY 11212",40.663,-73.91,True
+SITE-06,Kinbridge Family Services,Kinbridge Mott Haven Family Center (SYN),Family Services,Bronx,Mott Haven,"530 Tolliver Avenue, Bronx, NY 10454",40.809,-73.923,True
+SITE-07,Kinbridge Family Services,Kinbridge Tremont Youth Residence (SYN),Youth Residence,Bronx,Tremont,"1875 Pennick Place, Bronx, NY 10457",40.846,-73.899,True
+SITE-08,Kinbridge Family Services,Kinbridge Fordham Clinical Services (SYN),Clinic,Bronx,Fordham,"2604 Sorrel Street, Bronx, NY 10458",40.861,-73.89,True
