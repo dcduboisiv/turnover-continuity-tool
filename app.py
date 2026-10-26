@@ -1,8 +1,12 @@
 """
-Turnover & Care Continuity dashboard — MVP 2
-Streamlit front end over the MVP 1 engine. Every number on the page comes
-from turnover_calculator.py; the app only filters the data, passes the
-sidebar settings through, and displays the results.
+Turnover & Care Continuity dashboard — MVP 3
+Streamlit front end over the MVP 1 engine, with (MVP 3) an AI assistant
+for plain-English scenario questions and funder-report summaries at the
+top. Every number on the page comes from turnover_calculator.py (through
+scenarios.py for views and what-ifs); the app only filters the data,
+passes the sidebar settings through, and displays the results. The AI
+features go through turnover_agent.py, which parses and narrates but
+never calculates.
 
 The organization (Kinbridge Family Services), its sites, staff and
 children are all fictional / synthetic.
@@ -11,15 +15,21 @@ Run locally:
     streamlit run app.py
 
 Deploy: push to GitHub, connect the repo at share.streamlit.io, main file
-app.py.
+app.py. The AI features need ANTHROPIC_API_KEY in the app's Settings >
+Secrets (see .streamlit/secrets.toml.example); everything else works
+without it.
 """
 
-from typing import Dict, List, Optional
+import os
+from typing import Optional
 
 import altair as alt
+import anthropic
 import pandas as pd
 import streamlit as st
 
+import scenarios as sc
+import turnover_agent as agent_ai
 from generate_sample_data import HISTORY_END, HISTORY_START, ORG_NAME, SITES_FILE
 from turnover_calculator import (
     CENTRAL_ADMIN,
@@ -93,7 +103,7 @@ def load():
 
 
 data, sites, default_costs = load()
-staff_all, positions_all, assignments_all = data["staff"], data["positions"], data["assignments"]
+positions_all = data["positions"]
 site_names = dict(zip(sites["site_id"], sites["site_name"].str.replace(" (SYN)", "", regex=False)))
 site_names_short = {k: v.replace("Kinbridge ", "") for k, v in site_names.items()}
 role_order = list(default_costs.index)
@@ -164,35 +174,159 @@ for col in EDITABLE_COSTS:
     assumptions[col] = edited.set_index("role")[col].reindex(assumptions.index).fillna(default_costs[col])
 
 # ---------------------------------------------------------------------------
-# Filtered data
+# Filtered data (scenarios.filter_view: the same slice the AI layer uses)
 # ---------------------------------------------------------------------------
 
-
-def in_scope(df: pd.DataFrame) -> pd.DataFrame:
-    mask = df["role"].isin(roles) & df["program_area"].isin(areas)
-    if site != ALL_SITES:
-        mask &= df["site_id"] == site
-    if staff_type:
-        mask &= df["staff_type"] == staff_type
-    return df[mask]
-
-
-staff = in_scope(staff_all)
-positions = in_scope(positions_all)
-# Continuity follows the children a site serves (placed there, or assigned a
-# worker from there), through every in-view role they have.
-assignments = assignments_all[assignments_all["role"].isin(roles)]
-if site != ALL_SITES:
-    worker_site = assignments["position_id"].map(positions_all.set_index("position_id")["site_id"])
-    served = set(assignments.loc[(assignments["site_id"] == site) | (worker_site == site), "child_id"])
-    assignments = assignments[assignments["child_id"].isin(served)]
+view = sc.View(site_id=None if site == ALL_SITES else site, program_areas=tuple(areas),
+               staff_type=staff_type, roles=tuple(roles), start=start, end=end)
+settings = sc.Settings(assumptions=assumptions, ramp_on=ramp_on, ramp_start=ramp_start,
+                       ramp_months=ramp_months, basis=basis, caseload=caseload)
+scoped = sc.filter_view(data, view, role_order)
+staff, positions, assignments = scoped["staff"], scoped["positions"], scoped["assignments"]
 weights = {r: w for r, w in ROLE_CRITICALITY.items() if r in roles}
-view_roles = [r for r in role_order if r in roles]
+view_roles = scoped["roles"]
 period_label = str(first_year) if first_year == last_year else f"{first_year}–{last_year}"
 
 st.title("Turnover & Care Continuity")
 st.caption(f"{ORG_NAME} (fictional) · {site_names_short.get(site, 'All sites')} · {period_label} · "
            "synthetic sample data")
+
+# ---------------------------------------------------------------------------
+# AI assistant (turnover_agent: Claude parses the question, the scenario
+# engine reruns the calculator, Claude narrates the computed result). First
+# on the page, above the headline metrics.
+# ---------------------------------------------------------------------------
+
+
+def anthropic_api_key() -> Optional[str]:
+    """Streamlit secrets first (Community Cloud, or a local .streamlit/secrets.toml), then the environment."""
+    try:
+        key = st.secrets.get("ANTHROPIC_API_KEY")
+    except Exception:
+        key = None  # no secrets.toml at all (e.g. first local run): fall through to the env var
+    return key or os.environ.get("ANTHROPIC_API_KEY")
+
+
+def ai_call(fn, *args):
+    """Runs an AI call and turns its failures into page messages. Returns None on failure."""
+    try:
+        return fn(agent_ai.get_client(api_key=api_key), *args)
+    except ValueError as e:
+        st.warning(f"Couldn't answer that: {e}")
+    except anthropic.AuthenticationError:
+        st.error("The AI service rejected the API key. Check ANTHROPIC_API_KEY in your secrets.")
+    except anthropic.RateLimitError:
+        st.error("The AI service is rate-limiting requests. Wait a moment and try again.")
+    except (anthropic.APIError, RuntimeError) as e:
+        st.error(f"The AI request failed: {e}")
+    return None
+
+
+def flag_figures(figures):
+    if figures:
+        st.warning(
+            "Check these figures before using this text; they don't match any number the "
+            f"calculator produced: {', '.join(figures)}"
+        )
+
+
+@st.cache_resource
+def get_org():
+    return agent_ai.Org(data, sites, default_costs)
+
+
+def settings_key(s: sc.Settings):
+    return (s.ramp_on, s.ramp_start, s.ramp_months, s.basis, tuple(sorted(s.caseload.items())),
+            s.assumptions[list(EDITABLE_COSTS)].to_json())
+
+
+AI_DELTAS = {  # metric: label; lower is better for all of them
+    "turnover_rate": "Turnover rate",
+    "vacancy_rate": "Vacancy rate",
+    "continuity_score": "Care-continuity score",
+    "family_days_without_worker": "Family-days without a worker",
+    "annual_turnover_cost": "Cost of turnover / yr",
+}
+
+
+def delta_text(metric: str, after: float, before: float) -> str:
+    diff = after - before
+    if metric in ("turnover_rate", "vacancy_rate"):
+        return f"{diff * 100:+.1f} pts"
+    if metric == "continuity_score":
+        return f"{diff:+.2f}"
+    return f"{diff:+,.0f}"
+
+api_key = anthropic_api_key()
+org = get_org()
+st.subheader("Ask about turnover and continuity")
+if not api_key:
+    st.info(
+        "**The AI assistant needs an Anthropic API key.** The dashboard below works without one.\n\n"
+        "- **Locally:** copy `.streamlit/secrets.toml.example` to `.streamlit/secrets.toml` and fill in the key.\n"
+        "- **Streamlit Community Cloud:** add `ANTHROPIC_API_KEY` under the app's Settings → Secrets."
+    )
+else:
+    with st.form("ask"):
+        question = st.text_area(
+            "Question", label_visibility="collapsed", height=80,
+            placeholder="e.g. What happens to the care-continuity score if caseworker turnover drops 10%? "
+                        "· What if we raised the clinician caseload cap to 25? "
+                        "· Which site has the worst break-even tenure for caseworkers?",
+        )
+        asked = st.form_submit_button("Ask", type="primary")
+    if asked and question.strip():
+        with st.spinner("Reading the question, rerunning the calculator, and writing the answer…"):
+            result = ai_call(agent_ai.ask, question.strip(), org, view, settings)
+        if result is not None:
+            st.session_state["ai_answer"] = {"question": question.strip(), "result": result}
+
+    answer = st.session_state.get("ai_answer")
+    if answer:
+        result = answer["result"]
+        parsed = result["parsed"]
+        st.markdown(f"**Q:** {answer['question']}")
+        st.info(result["explanation"])
+        flag_figures(result["unverified_figures"])
+        answered = agent_ai.describe_view(result["view"], org)
+        st.caption("Answered for: " + " · ".join(f"{k.replace('_', ' ')} {v}" for k, v in answered.items()))
+        if result["changes"]:
+            st.caption("What-if: " + "; ".join(result["changes"]) + ".")
+        if parsed["assumption_notes"]:
+            st.caption(f"Assumption: {parsed['assumption_notes']}")
+        if parsed["unsupported"]:
+            st.caption(f"Not modeled: {parsed['unsupported']}")
+        if result["after"]:
+            st.caption("What-if result, after vs. before:")
+            cols = st.columns(len(AI_DELTAS))
+            for col, (metric, label) in zip(cols, AI_DELTAS.items()):
+                b, a = result["before"].get(metric), result["after"].get(metric)
+                if a is None or b is None:
+                    col.metric(label, "—")
+                    continue
+                col.metric(label, agent_ai.fmt(metric, a), delta_text(metric, a, b), delta_color="inverse",
+                           help=f"Before: {agent_ai.fmt(metric, b)}")
+        if result["breakdown"] and result["breakdown"]["rows"]:
+            st.dataframe(pd.DataFrame(result["breakdown"]["rows"]), hide_index=True, width="stretch")
+
+    with st.expander(f"📝 Funder-report summary · {site_names_short.get(site, 'All sites')} · {period_label}"):
+        st.caption("A short staff-stability and continuity paragraph for a grant report, written from this "
+                   "view's computed numbers (site, staff and period from the sidebar).")
+        report_key = (view, settings_key(settings))
+        reports = st.session_state.setdefault("funder_reports", {})
+        if st.button("Draft funder summary", key="funder_report"):
+            with st.spinner("Pulling the numbers and drafting the summary…"):
+                drafted = ai_call(agent_ai.funder_report, org, view, settings)
+            if drafted is not None:
+                reports[report_key] = drafted
+        drafted = reports.get(report_key)
+        if drafted:
+            st.text_area("Funder summary — edit before using", drafted["text"], height=220,
+                         key=f"funder_text_{hash(report_key)}")
+            flag_figures(drafted["unverified_figures"])
+            st.caption("Written from synthetic sample data for a fictional organization.")
+
+st.divider()
 
 if positions.empty:
     st.info("No seats match these filters. Widen the site, program area, staff type or role selection.")

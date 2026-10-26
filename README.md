@@ -34,7 +34,64 @@ youth care worker because staff left.
       without the ramp, vacancy cost crossover, family-days by site,
       retention curves and open seats. Built for Streamlit Community Cloud.
       88 passing tests in all, including 38 that run the app headlessly.
-- [ ] **MVP 3 — AI layer.**
+- [x] **MVP 3 — AI layer.** Plain-English scenario questions (lookups,
+      site / role comparisons and what-ifs) at the top of the page, and a
+      funder-report summary for any site and period, in the app and as a
+      CLI. Claude parses and writes; the calculator does every
+      calculation, and every number Claude writes is checked against the
+      calculator's output. 146 passing tests, with every Claude call
+      mocked (no API key or spend needed). *Built; not yet run against
+      the live API.*
+
+## MVP 3 — What's here
+
+- `scenarios.py` — the deterministic scenario engine (no AI). Views
+  (site, program area, staff type, roles, period) and settings (costs,
+  ramp-up, vacancy-cost basis, caseloads) as objects, the dashboard's
+  headline / per-role / per-site numbers, and the what-if changes:
+  - **Turnover reduction** ("caseworker turnover drops 10%"): that share
+    of the period's departures, taken evenly by date, don't happen. Each
+    of those staff stays in the seat instead of being replaced, so the
+    seat never goes vacant and the children keep their caregiver. Turnover,
+    vacancy, continuity and family-days are all recomputed from the
+    adjusted data. "10 points" is converted to a share using the actual
+    rate.
+  - Caseloads, per-role costs (set or ±%), ramp-up on/off and its two
+    settings, and the vacancy-cost basis.
+  - The dashboard uses the same `filter_view`, so an answer's "before"
+    numbers are the numbers on the page.
+- `turnover_agent.py` — the AI layer, same discipline as the EDO, RevOps
+  and recruiting agents: the model never does the math.
+  - **`ask()`**: the question goes to Claude, which returns a structured
+    view (site, staff type, roles, program areas, years), what-if changes
+    from the list above, an optional site or role breakdown and the
+    metric the question is about. Structured outputs guarantee the shape;
+    `validate_question` checks the meaning before anything reruns. For
+    example, it rejects "10%" parsed as 10 and caseloads for shift-based
+    roles. The engine runs before and after, ranks any breakdown itself
+    (highest / lowest, which direction is worse, all-equal), and Claude
+    writes 2–4 sentences from the computed results.
+  - **`funder_report()`**: a view's children served, turnover,
+    vacancies, 12-month retention, days-to-fill, continuity score and
+    family-days (plus year-by-year figures for multi-year periods) go to
+    Claude, which writes a 120–180 word grant-report paragraph. Costs are
+    left out.
+  - **Number check**: every number the model writes (dollars,
+    percentages, months, scores, counts) is compared with the numbers it
+    was given (`unknown_figures`). Anything else, such as a rounded
+    "$1.2M" or a made-up "90%", is flagged in the app and CLI.
+  - Model `claude-opus-5-5` at low effort, with server-side refusal
+    fallback (`fallbacks: "default"`) and structured outputs for the parse.
+- `app.py` — "Ask about turnover and continuity" is the first thing on the
+  page, above the headline metrics. It shows the answer, what was modeled,
+  a what-if after-vs-before row and any breakdown table. Below it, a
+  "Funder-report summary" expander drafts the paragraph for the sidebar's
+  site and period into an editable box. Answers and drafts are kept in the
+  session, so reruns don't call the AI again. Without a key, the
+  assistant explains how to add one and the dashboard works unchanged.
+- `test_scenarios.py`, `test_turnover_agent.py`, AI tests in
+  `test_app.py`. In the AI tests, Claude is replaced by a fake that returns
+  canned replies and records what it was sent.
 
 ## MVP 2 — What's here
 
@@ -170,7 +227,8 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python generate_sample_data.py      # rewrite the sample CSVs
 .venv/bin/python turnover_calculator.py       # print the report
 .venv/bin/streamlit run app.py                # the dashboard
-.venv/bin/python -m pytest -q                 # 88 tests
+.venv/bin/python -m pytest -q                 # 146 tests
+.venv/bin/python turnover_agent.py --ask "Which site has the worst break-even tenure for caseworkers?"
 ```
 
 ## Deploy (Streamlit Community Cloud)
@@ -178,8 +236,11 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 1. Push `main` to GitHub.
 2. At share.streamlit.io, choose **Create app**, pick
    `dcduboisiv/turnover-continuity-tool`, branch `main`, main file `app.py`.
-3. No secrets are needed: MVP 2 has no API calls.
+3. For the AI features, add `ANTHROPIC_API_KEY = "..."` under the app's
+   **Settings → Secrets** (see `.streamlit/secrets.toml.example`). The
+   dashboard works without it.
 4. After a later push that changes an imported module
-   (`turnover_calculator.py`, `generate_sample_data.py`), reboot the app
+   (`turnover_calculator.py`, `scenarios.py`, `turnover_agent.py`,
+   `generate_sample_data.py`), reboot the app
    (**Manage app → Reboot**), because Cloud keeps imported modules in
    memory.

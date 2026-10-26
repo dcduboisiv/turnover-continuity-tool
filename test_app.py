@@ -28,7 +28,8 @@ def metrics(at):
 
 
 def hints(at):
-    return [i.value for i in at.info if "fictional" not in i.value]
+    """Empty-section notes; ignores the sidebar label and the AI section's no-key note."""
+    return [i.value for i in at.info if "fictional" not in i.value and "API key" not in i.value]
 
 
 def num(s: str) -> float:
@@ -145,3 +146,115 @@ def test_every_site_and_staff_type_renders(site, staff_type):
     at.sidebar.selectbox(key="site").select(site)
     at.sidebar.radio(key="staff_type").set_value(staff_type).run()
     assert not at.exception and not at.error
+
+
+# ---------------------------------------------------------------------------
+# AI assistant (Claude mocked: no API key or spend needed)
+# ---------------------------------------------------------------------------
+
+import json
+
+import turnover_agent as agent_ai
+from test_turnover_agent import FakeClaude, change, question_json
+
+
+def app_with_key(monkeypatch, *replies):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    fake = FakeClaude(*replies)
+    monkeypatch.setattr(agent_ai, "call_claude", fake)
+    at = AppTest.from_file("app.py", default_timeout=60)
+    at.secrets["ANTHROPIC_API_KEY"] = "test-key"
+    at.run()
+    return at, fake
+
+
+def ask(at, question):
+    at.text_area[0].input(question)
+    at.button[0].click()
+    return at.run()
+
+
+def test_question_box_is_first_on_the_page(monkeypatch):
+    at, _ = app_with_key(monkeypatch)
+    order = [type(node).__name__ for node in at.main]
+    assert order.index("TextArea") < order.index("Metric")
+    assert at.main.subheader[0].value == "Ask about turnover and continuity"
+
+
+def test_ai_without_key_explains_setup_and_dashboard_still_works(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    at = run_app()
+    assert not at.exception and not at.error
+    assert any("needs an Anthropic API key" in i.value for i in at.info)
+    assert len(at.main.text_area) == 0
+    assert metrics(at)["Turnover rate"] != "—"
+
+
+def test_ask_what_if_shows_answer_and_engine_deltas(monkeypatch):
+    at, fake = app_with_key(
+        monkeypatch,
+        question_json(changes=[change("turnover_reduction", 0.10, "Caseworker", unit="relative")]),
+        "Continuity improves.",
+    )
+    at = ask(at, "What happens to the care-continuity score if caseworker turnover drops 10%?")
+    assert not at.exception and not at.error
+    assert len(fake.calls) == 2
+    assert "Kinbridge" in fake.calls[0]["system"]
+    assert any("Continuity improves." in i.value for i in at.info)
+    assert any("Caseworker turnover down 10%" in c.value for c in at.caption)
+    context = json.loads(fake.calls[1]["user_prompt"])
+    what_if = next(x for x in at.metric if x.label == "Care-continuity score")   # what-if row comes first
+    assert what_if.value == context["after"]["continuity_score"]
+    assert what_if.delta.startswith("-")
+
+
+def test_ask_uses_the_sidebar_view_and_settings(monkeypatch):
+    at, fake = app_with_key(monkeypatch, question_json(), "Answer.")
+    at.sidebar.selectbox(key="site").select("SITE-03")
+    at.sidebar.number_input(key="caseload_Clinician").set_value(25)
+    at = ask(at.run(), "How is this site doing?")
+    context = json.loads(fake.calls[1]["user_prompt"])
+    assert context["view"]["site"] == "Kinbridge Washington Heights Family Center"
+    assert context["settings"]["typical_caseload"]["Clinician"] == "25"
+
+
+def test_ask_invalid_question_is_a_warning_not_a_crash(monkeypatch):
+    at, fake = app_with_key(monkeypatch, question_json(changes=[change("caseload", 25, "Youth Care Worker")]))
+    at = ask(at, "Raise youth care worker caseloads to 25")
+    assert not at.exception
+    assert any("Couldn't answer that" in w.value for w in at.warning)
+    assert len(fake.calls) == 1
+
+
+def test_ask_flags_invented_figures(monkeypatch):
+    at, _ = app_with_key(monkeypatch, question_json(), "Turnover costs roughly $1.2M.")
+    at = ask(at, "What does turnover cost?")
+    assert any("$1.2M" in w.value for w in at.warning)
+
+
+def test_breakdown_table_is_shown(monkeypatch):
+    at, _ = app_with_key(monkeypatch, question_json(roles=["Caseworker"], breakdown="site",
+                                                    focus_metric="breakeven_months_with_ramp"), "Same everywhere.")
+    at = ask(at, "Which site has the worst break-even tenure for caseworkers?")
+    table = at.main.dataframe[0].value
+    assert len(table) == 4 and "site" in table.columns
+
+
+def test_answer_survives_reruns_without_calling_ai_again(monkeypatch):
+    at, fake = app_with_key(monkeypatch, question_json(), "Answer text.")
+    at = ask(at, "How are we doing?")
+    at.sidebar.toggle(key="ramp_on").set_value(False).run()
+    assert any("Answer text." in i.value for i in at.info)
+    assert len(fake.calls) == 2
+
+
+def test_funder_summary_for_the_sidebar_view(monkeypatch):
+    at, fake = app_with_key(monkeypatch, "Kinbridge served children. Turnover was 99%.")
+    at.sidebar.selectbox(key="site").select("SITE-05")
+    at.run()
+    at.button(key="funder_report").click().run()
+    assert not at.exception and not at.error
+    context = json.loads(fake.calls[0]["user_prompt"])
+    assert context["view"]["site"] == "Kinbridge Brownsville Youth Residence"
+    assert any(t.label.startswith("Funder summary") and "Kinbridge served" in t.value for t in at.text_area)
+    assert any("99%" in w.value for w in at.warning)
